@@ -7,6 +7,7 @@ using SPTarkov.Server.Core.Models.Spt.Mod;
 using SPTarkov.Server.Core.Models.Utils;
 using SPTarkov.Server.Core.Servers;
 using System.Reflection;
+using System.Text.Json;
 
 namespace SLPF.BarterItemsStacks;
 
@@ -27,7 +28,7 @@ public record ModMetadata : AbstractModMetadata
 
 public class BarterItemsConfig
 {
-    public Dictionary<string, int> BarterItems { get; set; } = new Dictionary<string, int>();
+    public Dictionary<string, int> BarterItems { get; set; } = new();
 }
 
 [Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]

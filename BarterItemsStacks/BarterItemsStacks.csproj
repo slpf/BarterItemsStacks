@@ -6,7 +6,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<OutputType>Library</OutputType>
-		<Version>1.0.0</Version>
+		<Version>1.1.0</Version>
 		<OutputPath>bin\$(Configuration)\$(ProjectName)\$(AssemblyName)\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
@@ -14,5 +14,6 @@
 		<PackageReference Include="SPTarkov.Common" Version="4.0.0" />
 		<PackageReference Include="SPTarkov.DI" Version="4.0.0" />
 		<PackageReference Include="SPTarkov.Server.Core" Version="4.0.0" />
+		<PackageReference Include="SPTarkov.Reflection" Version="4.0.0" />
 	</ItemGroup>
 </Project>
