@@ -16,10 +16,11 @@ namespace BarterItemsStacksClient
             LogSource = Logger;
 
             new UpdateItemViewPatch().Enable();
-            new MergePatch().Enable();
+            //new MergePatch().Enable();
             new HideoutMethod23Patch().Enable();
             new HideoutMethod21Patch().Enable();
         }
     }
 
 }
+
