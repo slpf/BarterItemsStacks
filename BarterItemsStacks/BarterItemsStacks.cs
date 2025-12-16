@@ -1,4 +1,5 @@
-﻿using SPTarkov.DI.Annotations;
+﻿using Microsoft.AspNetCore.Http;
+using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Helpers;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
@@ -19,7 +20,7 @@ public record ModMetadata : AbstractModMetadata
     public override string Name { get; init; } = "Barter Items Stacks";
     public override string Author { get; init; } = "SLPF";
     public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.2.0");
+    public override SemanticVersioning.Version Version { get; init; } = new("1.2.1");
     public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
     public override List<string>? Incompatibilities { get; init; }
     public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
@@ -46,10 +47,12 @@ public class ItemsConfig
         private int? MaxResource;
 
         [JsonIgnore]
-        public int Stack => Clamp(StackSize ?? 0, 0, 99);
+        public int Stack => Gt0(StackSize ?? 0);
 
         [JsonIgnore]
-        public int Resource => Clamp(MaxResource ?? 0, 0, 99999);
+        public int Resource => Gt0(MaxResource ?? 0);
+
+        private static int Gt0(int v) => v < 0 ? 0 : v;
 
         private static int Clamp(int v, int min, int max)
             => v < min ? min : (v > max ? max : v);

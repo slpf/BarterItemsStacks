@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 namespace BarterItemsStacksClient
 {
-    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.2.0")]
+    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.2.1")]
     [BepInDependency("com.lacyway.mc", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {

@@ -7,8 +7,8 @@
 //	Format: 
 //		"templateItemID": { "StackSize": stackSizeValue, "MaxResource": resourceValue }
 //				<templateItemID> - item's template ID; string; keys and key cards ids are excluded
-//				<stackSizeValue> - desired stack size; integer (clamped to 1–99); optional; if omitted or 0 - default value
-//				<resourceValue>  - desired max resource (if supported); integer (clamped to 1–99999); optional; if omitted or 0 - default value
+//				<stackSizeValue> - desired stack size; integer; optional; if omitted or less than zero - default value
+//				<resourceValue>  - desired max resource (if supported); integer; optional; if omitted or less than zero - default value
 //	Examples:
 //		"5d1b371186f774253763a656": { "StackSize": 5, "MaxResource": 500 },		// Expeditionary fuel tank, stack size - 5, max resource - 500
 //		"5c0fa877d174af02a012e1cf": { "MaxResource": 200 } 						// Aquamari water bottle with filter, stack size - default (not stackable), max resource - 200
@@ -16,6 +16,14 @@
 //
 {
 	"Items": {
+		// Cash
+		// "5449016a4bdc2d6f028b456f": { "StackSize": 20000000 },	// Roubles
+		// "5696686a4bdc2da3298b456a": { "StackSize": 20000000 },	// Dollars
+		// "569668774bdc2da2298b4568": { "StackSize": 20000000 },	// Euros
+		// "6656560053eaaa7a23349c86": { "StackSize": 2000 },		// Lega Medal
+		// "5d235b4d86f7742e017bc88a": { "StackSize": 2000 },		// GP coin
+		// "59faff1d86f7746c51718c9c": { "StackSize": 2000 },		// Physical Bitcoin
+		
 		// Barter items
 		"5bc9b355d4351e6d1509862a": { "StackSize": 5 },		// #FireKlean gun lube
 		"5bc9be8fd4351e00334cae6e": { "StackSize": 5 },		// 42 Signature Blend English Tea
@@ -216,6 +224,89 @@
 		"590c346786f77423e50ed342": { "StackSize": 10 },	// Xenomorph sealing foam
 		"56742c2e4bdc2d95058b456d": { "StackSize": 20 },	// Zibbo lighter
 		
+		// Spec items
+		"67ab3d4b83869afd170fdd3f": { "StackSize": 5 },		// BBQ-S43 gas torch
+		"5f4f9eb969cdc30ff33f09db": { "StackSize": 5 },		// EYE MK.2 professional hand-held compass
+		"544fb5454bdc2df8738b456a": { "StackSize": 5 },		// Leatherman Multitool
+		"5991b51486f77447b112d44f": { "StackSize": 5 },		// MS2000 Marker
+		"63a0b2eabea67a6d93009e52": { "StackSize": 5 },		// Radio repeater
+		"5ac78a9b86f7741cca0bbd8d": { "StackSize": 5 },		// Signal Jammer
+		"666b11055a706400b717cfa5": { "StackSize": 5 },		// Tripwire installation kit
+		"678fa929819ddc4c350c0317": { "StackSize": 5 },		// Valve handwheel
+		"61605e13ffa6e502ac5e7eef": { "StackSize": 5 },		// Vortex Ranger 1500 rangefinder
+		"5b4391a586f7745321235ab2": { "StackSize": 5 },		// WI-FI Camera
+		
+		// Repair kits
+		// "591094e086f7747caa7bb2ef": { "StackSize": 5, "MaxResource": 3000 },	// Body armor repair kit
+		// "5910968f86f77425cf569c32": { "StackSize": 5, "MaxResource": 3000 },	// Weapon repair kit
+		
+		// Drinks
+		// "5c0fa877d174af02a012e1cf": { "StackSize": 5 },	// Aquamari water bottle with filter
+		// "5d403f9186f7743cac3f229b": { "StackSize": 5 },	// Bottle of Dan Jackiel whiskey
+		// "5d1b376e86f774252519444e": { "StackSize": 5 },	// Bottle of Fierce Hatchling moonshine
+		// "5e8f3423fd7471236e6e3b64": { "StackSize": 5 },	// Bottle of Norvinsky Yadreniy premium kvass (0.6L)
+		// "62a09f32621468534a797acb": { "StackSize": 5 },	// Bottle of Pevko Light beer
+		// "5d40407c86f774318526545a": { "StackSize": 5 },	// Bottle of Tarkovskaya vodka
+		// "5448fee04bdc2dbc018b4567": { "StackSize": 5 },	// Bottle of water (0.6L)
+		// "5751496424597720a27126da": { "StackSize": 5 },	// Can of Hot Rod energy drink
+		// "575062b524597720a31c09a1": { "StackSize": 5 },	// Can of Ice Green tea
+		// "5751435d24597720a27126d1": { "StackSize": 5 },	// Can of Max Energy energy drink
+		// "60b0f93284c20f0feb453da7": { "StackSize": 5 },	// Can of RatCola soda
+		// "57514643245977207f2c2d09": { "StackSize": 5 },	// Can of TarCola soda
+		// "5d1b33a686f7742523398398": { "StackSize": 5 },	// Canister with purified water
+		// "60098b1705871270cd5352a1": { "StackSize": 5 },	// Emergency Water Ration
+		// "57513f07245977207e26a311": { "StackSize": 5 },	// Pack of apple juice
+		// "57513f9324597720a7128161": { "StackSize": 5 },	// Pack of Grand juice
+		// "575146b724597720a27126d5": { "StackSize": 5 },	// Pack of milk
+		// "544fb62a4bdc2dfb738b4568": { "StackSize": 5 },	// Pack of Russian Army pineapple juice
+		// "57513fcc24597720a31c09a6": { "StackSize": 5 },	// Pack of Vita juice
+		
+		// Food
+		// "57505f6224597709a92585a9": { "StackSize": 5 },	// Alyonka chocolate bar
+		// "5448ff904bdc2d6f028b456e": { "StackSize": 5 },	// Army crackers
+		// "57347da92459774491567cf5": { "StackSize": 5 },	// Can of beef stew (Large)
+		// "57347d7224597744596b4e72": { "StackSize": 5 },	// Can of beef stew (Small)
+		// "5734773724597737fd047c14": { "StackSize": 5 },	// Can of condensed milk
+		// "57347d692459774491567cf1": { "StackSize": 5 },	// Can of green peas
+		// "57347d9c245977448b40fa85": { "StackSize": 5 },	// Can of herring
+		// "57347d5f245977448b40fa81": { "StackSize": 5 },	// Can of humpback salmon
+		// "5673de654bdc2d180f8b456d": { "StackSize": 5 },	// Can of pacific saury
+		// "5bc9c29cd4351e003562b8a3": { "StackSize": 5 },	// Can of sprats
+		// "57347d8724597744596b4e76": { "StackSize": 5 },	// Can of squash spread
+		// "5751487e245977207e26a315": { "StackSize": 5 },	// Emelya rye croutons
+		// "590c5d4b86f774784e1b9c45": { "StackSize": 5 },	// Iskra ration pack
+		// "5bc9b156d4351e00367fbce9": { "StackSize": 5 },	// Jar of DevilDog mayo
+		// "590c5f0d86f77413997acfab": { "StackSize": 5 },	// MRE ration pack
+		// "656df4fec921ad01000481a2": { "StackSize": 5 },	// Pack of instant noodles
+		// "57347d90245977448f7b7f65": { "StackSize": 5 },	// Pack of oat flakes
+		// "59e3577886f774176a362503": { "StackSize": 5 },	// Pack of sugar
+		// "65815f0e647e3d7246384e14": { "StackSize": 5 },	// Pack of Tarker dried meat
+		// "57347d3d245977448f7b7f61": { "StackSize": 5 },	// Rye croutons
+		// "635a758bfefc88a93f021b8a": { "StackSize": 5 },	// Salty Dog beef sausage
+		// "544fb6cc4bdc2d34748b456e": { "StackSize": 5 },	// Slickers chocolate bar
+		
+		// Medication
+		// "60098ad7c2240c0fe85c570a": { "StackSize": 5 },	// AFAK tactical individual first aid kit
+		// "5755356824597772cb798962": { "StackSize": 5 },	// AI-2 medkit
+		// "5af0454c86f7746bf20992e8": { "StackSize": 5 },	// Aluminum splint
+		// "544fb37f4bdc2dee738b4567": { "StackSize": 5 },	// Analgin painkillers
+		// "5751a25924597722c463c472": { "StackSize": 5 },	// Army bandage
+		// "544fb25a4bdc2dfb738b4567": { "StackSize": 5 },	// Aseptic bandage
+		// "590c695186f7741e566b64a2": { "StackSize": 5 },	// Augmentin antibiotic pills
+		// "5e8488fa988a8701445df1e4": { "StackSize": 5 },	// CALOK-B hemostatic applicator
+		// "590c661e86f7741e566b646a": { "StackSize": 5 },	// Car first aid kit
+		// "60098af40accd37ef2175f27": { "StackSize": 5 },	// CAT hemostatic tourniquet
+		// "5d02778e86f774203e7dedbe": { "StackSize": 5 },	// CMS surgical kit
+		// "5e831507ea0a7c419c2f9bd9": { "StackSize": 5 },	// Esmarch tourniquet
+		// "5751a89d24597722aa0e8db0": { "StackSize": 5 },	// Golden Star balm
+		// "590c657e86f77412b013051d": { "StackSize": 5 },	// Grizzly medical kit
+		// "5af0548586f7743a532b7e99": { "StackSize": 5 },	// Ibuprofen painkillers
+		// "590c678286f77426c9660122": { "StackSize": 5 },	// IFAK individual first aid kit
+		// "544fb3364bdc2d34748b456a": { "StackSize": 5 },	// Immobilizing splint
+		// "544fb45d4bdc2dee738b4568": { "StackSize": 5 },	// Salewa first aid kit
+		// "5d02797c86f774203f38e30a": { "StackSize": 5 },	// Surv12 field surgical kit
+		// "5755383e24597772cb798966": { "StackSize": 5 },	// Vaseline balm
+		
 		// Injectors
 		// "66507eabf5ddb0818b085b68": { "StackSize": 10, "MaxResource": 1 },		// 2A2-(b-TG) stimulant injector
 		// "5ed515c8d380ab312177c0fa": { "StackSize": 10, "MaxResource": 1 },		// 3-(b-TG) stimulant injector
@@ -239,22 +330,6 @@
 		// "637b620db7afa97bfc3d7009": { "StackSize": 10, "MaxResource": 1 },		// Trimadol stimulant injector
 		// "5fca138c2a7b221b2852a5c6": { "StackSize": 10, "MaxResource": 1 },		// xTG-12 antidote injector
 		// "5c0e533786f7747fa23f4d47": { "StackSize": 10, "MaxResource": 1 },		// Zagustin hemostatic drug injector
-		
-		// Spec items
-		"67ab3d4b83869afd170fdd3f": { "StackSize": 5 },		// BBQ-S43 gas torch
-		"5f4f9eb969cdc30ff33f09db": { "StackSize": 5 },		// EYE MK.2 professional hand-held compass
-		"544fb5454bdc2df8738b456a": { "StackSize": 5 },		// Leatherman Multitool
-		"5991b51486f77447b112d44f": { "StackSize": 5 },		// MS2000 Marker
-		"63a0b2eabea67a6d93009e52": { "StackSize": 5 },		// Radio repeater
-		"5ac78a9b86f7741cca0bbd8d": { "StackSize": 5 },		// Signal Jammer
-		"666b11055a706400b717cfa5": { "StackSize": 5 },		// Tripwire installation kit
-		"678fa929819ddc4c350c0317": { "StackSize": 5 },		// Valve handwheel
-		"61605e13ffa6e502ac5e7eef": { "StackSize": 5 },		// Vortex Ranger 1500 rangefinder
-		"5b4391a586f7745321235ab2": { "StackSize": 5 },		// WI-FI Camera
-		
-		// Repair kits
-		// "591094e086f7747caa7bb2ef": { "StackSize": 5, "MaxResource": 3000 },	// Body armor repair kit
-		// "5910968f86f77425cf569c32": { "StackSize": 5, "MaxResource": 3000 },	// Weapon repair kit
 		
 		// Info items
 		"6389c92d52123d5dd17f8876": { "StackSize": 5 },		// Advanced Electronic Materials textbook
