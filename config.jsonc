@@ -16,6 +16,9 @@
 //
 {
 	"Items": {
+        // Base Classes
+    	// "5645bcb74bdc2ded0b8b4578": { "StackSize": 5 },  // Headphones
+
 		// Cash
 		// "5449016a4bdc2d6f028b456f": { "StackSize": 20000000 },	// Roubles
 		// "5696686a4bdc2da3298b456a": { "StackSize": 20000000 },	// Dollars
