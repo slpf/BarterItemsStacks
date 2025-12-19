@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Reflection;
+using System.Text.Json.Serialization;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
+using SPTarkov.Server.Core.Extensions;
 using SPTarkov.Server.Core.Helpers;
+using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Logging;
 using SPTarkov.Server.Core.Models.Spt.Mod;
@@ -9,8 +12,6 @@ using SPTarkov.Server.Core.Models.Utils;
 using SPTarkov.Server.Core.Servers;
 using SPTarkov.Server.Core.Utils;
 using SPTarkov.Server.Core.Utils.Json.Converters;
-using System.Reflection;
-using System.Text.Json.Serialization;
 
 namespace BarterItemsStacks;
 
@@ -20,7 +21,7 @@ public record ModMetadata : AbstractModMetadata
     public override string Name { get; init; } = "Barter Items Stacks";
     public override string Author { get; init; } = "SLPF";
     public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.2.2");
+    public override SemanticVersioning.Version Version { get; init; } = new("1.3.0");
     public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
     public override List<string>? Incompatibilities { get; init; }
     public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
@@ -31,9 +32,6 @@ public record ModMetadata : AbstractModMetadata
 
 public class ItemsConfig
 {
-    public const string KeycardParent = "5c164d2286f774194c5e69fa";
-    public const string KeyParent = "5c99f98d86f7745c314214b3";
-
     public const string FileName = "config.jsonc";
 
     public Dictionary<string, ItemRule> Items { get; set; } = new();
@@ -109,61 +107,28 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
 
             foreach (var item in config.Items)
             {
-                if (itemsDb.TryGetValue(item.Key, out TemplateItem template))
+                if (!itemsDb.TryGetValue(item.Key, out var template))
+                    continue;
+
+                if (template.Type != "Node")
                 {
-                    var parent = template.Parent;
+                    ProcessTemplate(
+                        itemId: item.Key,
+                        itemRule: item.Value,
+                        template: template);
+                }
+                else
+                {
+                    // We only support one level of nestedness, it's up to
+                    // the user to give us correct immediate parent
 
-                    if (parent != ItemsConfig.KeycardParent && parent != ItemsConfig.KeyParent)
+                    var children = itemsDb.OfClass(x => x.Type != "Node", item.Key);
+                    foreach (var child in children)
                     {
-                        var stack = item.Value.Stack;
-                        var resource = item.Value.Resource;
-
-                        var props = template.Properties;
-
-                        if (props != null)
-                        {
-                            if (!_defaults.ContainsKey(item.Key))
-                            {
-                                _defaults[item.Key] = new DefaultProps(
-                                    props.StackMaxSize,
-                                    props.MaxResource,
-                                    props.MaxHpResource,
-                                    props.MaxRepairResource
-                                );
-                            }
-
-                            var changed = false;
-
-                            if (stack > 0)
-                            {
-                                props.StackMaxSize = stack;
-                                changed = true;
-                            }
-
-                            if (resource > 0)
-                            {
-                                if (props.MaxResource.HasValue)
-                                {
-                                    props.MaxResource = resource;
-                                    changed = true;
-                                }
-                                else if (props.MaxHpResource.HasValue)
-                                {
-                                    props.MaxHpResource = resource == 1 ? 0 : resource;
-                                    changed = true;
-                                }
-                                else if (props.MaxRepairResource.HasValue)
-                                {
-                                    props.MaxRepairResource = resource;
-                                    changed = true;
-                                }
-                            }
-
-                            if (changed)
-                            {
-                                _lastApplied.Add(item.Key);
-                            }  
-                        }
+                        ProcessTemplate(
+                            itemId: child.Id,
+                            itemRule: item.Value,
+                            template: child);
                     }
                 }
             }
@@ -174,6 +139,64 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
         {
             logger.LogWithColor($"[BarterItemsStacks] Loading Error >> {ex.Message}", LogTextColor.White, LogBackgroundColor.Red);
             return false;
+        }
+    }
+
+    void ProcessTemplate(MongoId itemId, ItemsConfig.ItemRule itemRule, TemplateItem template)
+    {
+        var parent = template.Parent;
+
+        if (parent == BaseClasses.KEYCARD || parent == BaseClasses.KEY_MECHANICAL)
+            return;
+
+        var stack = itemRule.Stack;
+        var resource = itemRule.Resource;
+
+        var props = template.Properties;
+
+        if (props != null)
+        {
+            if (!_defaults.ContainsKey(itemId))
+            {
+                _defaults[itemId] = new DefaultProps(
+                    props.StackMaxSize,
+                    props.MaxResource,
+                    props.MaxHpResource,
+                    props.MaxRepairResource
+                );
+            }
+
+            var changed = false;
+
+            if (stack > 0)
+            {
+                props.StackMaxSize = stack;
+                changed = true;
+            }
+
+            if (resource > 0)
+            {
+                if (props.MaxResource.HasValue)
+                {
+                    props.MaxResource = resource;
+                    changed = true;
+                }
+                else if (props.MaxHpResource.HasValue)
+                {
+                    props.MaxHpResource = resource == 1 ? 0 : resource;
+                    changed = true;
+                }
+                else if (props.MaxRepairResource.HasValue)
+                {
+                    props.MaxRepairResource = resource;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                _lastApplied.Add(itemId);
+            }
         }
     }
 }
