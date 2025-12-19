@@ -30,6 +30,7 @@ namespace BarterItemsStacksClient
             new CanApplyItemPatch().Enable();
             new RepaitKitStackUsePatch().Enable();
             new PlaceItemTriggerPatch().Enable();
+            new PlaceItemProtectPatch().Enable();
             new ConvertOperationResultToOperationPatch().Enable();
 
             if (HarmonyLib.AccessTools.TypeByName("MergeConsumables.Patches.ExecutePossibleAction_Patch") != null)

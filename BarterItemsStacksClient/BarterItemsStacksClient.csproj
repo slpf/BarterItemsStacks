@@ -43,6 +43,7 @@
     <Compile Include="Patches\Interactions\TransferMaxPatch.cs" />
     <Compile Include="InteractionsHandlerClassExtensions.cs" />
     <Compile Include="Patches\Quest\PlaceItemTriggerPatch.cs" />
+    <Compile Include="Patches\Quest\PlaceItemProtectPatch.cs" />
     <Compile Include="Patches\UIGridItemView\UpdateItemViewPatch.cs" />
     <Compile Include="RemoveOneFromStack\RemoveOneFromStackDescriptor.cs" />
     <Compile Include="RemoveOneFromStack\RemoveOneFromStackOperation.cs" />
