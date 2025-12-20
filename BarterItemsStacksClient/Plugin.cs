@@ -6,6 +6,7 @@ using BarterItemsStacksClient.Patches.Compatibility;
 using BarterItemsStacksClient.Patches.Hideout;
 using BarterItemsStacksClient.Patches.Interactions;
 using BarterItemsStacksClient.Patches.Quest;
+using BarterItemsStacksClient.Patches.UIGridItemView;
 
 namespace BarterItemsStacksClient
 {
@@ -22,6 +23,7 @@ namespace BarterItemsStacksClient
             LogSource = Logger;
 
             new UpdateItemViewPatch().Enable();
+            new CheckmarkPositionPatch().Enable();
             new MergePatch().Enable();
             new TransferMaxPatch().Enable();
             new HideoutMethod23Patch().Enable();
