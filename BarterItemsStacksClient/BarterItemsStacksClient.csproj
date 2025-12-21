@@ -40,6 +40,7 @@
     <Compile Include="Patches\Interactions\CanApplyItemPatch.cs" />
     <Compile Include="Patches\Interactions\MergePatch.cs" />
     <Compile Include="Patches\Interactions\RepaitKitStackUsePatch.cs" />
+    <Compile Include="Patches\Interactions\StacksInSpecialSlots.cs" />
     <Compile Include="Patches\Interactions\TransferMaxPatch.cs" />
     <Compile Include="InteractionsHandlerClassExtensions.cs" />
     <Compile Include="Patches\Quest\PlaceItemTriggerPatch.cs" />

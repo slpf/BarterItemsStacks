@@ -1,7 +1,7 @@
-﻿using BarterItemsStacksClient.Patches;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Logging;
 using System.Collections.Generic;
+using BarterItemsStacksClient.Patches;
 using BarterItemsStacksClient.Patches.Compatibility;
 using BarterItemsStacksClient.Patches.Hideout;
 using BarterItemsStacksClient.Patches.Interactions;
@@ -33,6 +33,7 @@ namespace BarterItemsStacksClient
             new RepaitKitStackUsePatch().Enable();
             new PlaceItemTriggerPatch().Enable();
             new PlaceItemProtectPatch().Enable();
+            new StacksInSpecialSlots().Enable();
             new ConvertOperationResultToOperationPatch().Enable();
 
             if (HarmonyLib.AccessTools.TypeByName("MergeConsumables.Patches.ExecutePossibleAction_Patch") != null)
