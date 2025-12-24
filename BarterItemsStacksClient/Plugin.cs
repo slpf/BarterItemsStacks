@@ -23,7 +23,7 @@ namespace BarterItemsStacksClient
             LogSource = Logger;
 
             new UpdateItemViewPatch().Enable();
-            // new CheckmarkPositionPatch().Enable();
+            new CheckmarkPositionPatch().Enable();
             new MergePatch().Enable();
             new TransferMaxPatch().Enable();
             new HideoutMethod23Patch().Enable();
