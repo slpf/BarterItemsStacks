@@ -12,22 +12,35 @@ namespace BarterItemsStacksClient.Patches.UIGridItemView
     {
         private static readonly FieldInfo CaptionField = AccessTools.Field(typeof(GridItemView), "Caption");
         
+        private static readonly ConditionalWeakTable<GridItemView, Flag> Done =
+            new ConditionalWeakTable<GridItemView, Flag>();
+        
+        private sealed class Flag { public bool Value; }
+        
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(GridItemView), nameof(GridItemView.Update));
+            return AccessTools.Method(typeof(ItemView), nameof(ItemView.Init));
         }
         
         [PatchPostfix]
-        [HarmonyPriority(Priority.Last)]
-        public static void Postfix(GridItemView __instance)
+        public static void Postfix(ItemView __instance)
         {
-            if (__instance == null)
+            var grid = __instance as GridItemView;
+
+            if (grid == null)
+            {
+                return;
+            }
+            
+            var flag = Done.GetOrCreateValue(grid);
+
+            if (flag.Value)
             {
                 return;
             }
 
-            var caption = CaptionField?.GetValue(__instance) as TextMeshProUGUI;
-            var panel = __instance.QuestItemViewPanel_0;
+            var caption = CaptionField?.GetValue(grid) as TextMeshProUGUI;
+            var panel = grid.QuestItemViewPanel_0;
 
             if (caption == null || panel == null)
             {
@@ -51,6 +64,8 @@ namespace BarterItemsStacksClient.Patches.UIGridItemView
             panelRect.anchoredPosition = new Vector2(
                 capPos.x - paddingX,
                 capPos.y - captionRect.rect.height);
+            
+            flag.Value = true;
         }
     }
 }
