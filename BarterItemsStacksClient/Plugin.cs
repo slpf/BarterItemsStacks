@@ -10,7 +10,7 @@ using BarterItemsStacksClient.Patches.UIGridItemView;
 
 namespace BarterItemsStacksClient
 {
-    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.2.4")]
+    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.2.5")]
     [BepInDependency("com.lacyway.mc", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
@@ -21,6 +21,8 @@ namespace BarterItemsStacksClient
         private void Awake()
         {
             LogSource = Logger;
+            
+            Settings.Init(Config);
 
             new UpdateItemViewPatch().Enable();
             // new CheckmarkPositionPatch().Enable();

@@ -15,12 +15,6 @@ namespace BarterItemsStacksClient.Patches.Interactions
         [PatchPrefix]
         public static bool Prefix(InteractionsHandlerClass __instance, Item item, Item targetItem, int count, TraderControllerClass itemController, bool simulate, ref GStruct154<GClass3425> __result)
         {
-            if (item.SpawnedInSession != targetItem.SpawnedInSession)
-            { 
-                __result = new GClass1522("Cannot transfer FIR and non-FIR items");
-                return false;
-            }
-
             if (!Utils.CheckBothItems<ResourceComponent>(item, targetItem))
             {
                 __result = new GClass1522("Cannot transfer items with different resource values");
@@ -44,8 +38,22 @@ namespace BarterItemsStacksClient.Patches.Interactions
                 __result = new GClass1522("Cannot transfer items with different repair resource values");
                 return false;
             }
+            
+            if (item.SpawnedInSession == targetItem.SpawnedInSession)
+            {
+                return true;
+            }
 
-            return true;
+            if ((Settings.FirStackableResources.Value && item is BarterItemItemClass && targetItem is BarterItemItemClass) ||
+                (Settings.FirStackableMed.Value && item is MedsItemClass && targetItem is MedsItemClass) ||
+                (Settings.FirStackableFoodDrinks.Value && item is FoodDrinkItemClass && targetItem is FoodDrinkItemClass) ||
+                (Settings.FirStackableRepairKits.Value && item is RepairKitsItemClass && targetItem is RepairKitsItemClass))
+            {
+                return true;
+            }
+
+            __result = new GClass1522("Cannot transfer FIR and non-FIR items");
+            return false;
         }
     }
 }
