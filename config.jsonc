@@ -334,6 +334,60 @@
 		// "5fca138c2a7b221b2852a5c6": { "StackSize": 10, "MaxResource": 1 },		// xTG-12 antidote injector
 		// "5c0e533786f7747fa23f4d47": { "StackSize": 10, "MaxResource": 1 },		// Zagustin hemostatic drug injector
 		
+		// CornerStore
+		// "66d29d8cd997df0d9a319605": { "StackSize": 5 },	// Orange Water Bottle
+		// "66d2a7278cc9ae87397e140b": { "StackSize": 5 },	// Welcome to Tarkov Water Bottle
+		// "66d35068ca6da85c198eca7d": { "StackSize": 5 },	// GrooveyPenguin's Space Gummies
+		// "66cfbfcb3e1b447f67b97be8": { "StackSize": 5 },	// 1.5 of Coca Cola
+		// "682be75830c1b5e48546d006": { "StackSize": 5 },	// 1.5 of Dr. Pepper
+		// "682c4f331fd3bb39df5b6935": { "StackSize": 5 },	// 1.5 of Sprite
+		// "66d551b91de343551f5d23d5": { "StackSize": 5 },	// Bud Light
+		// "66d5523e8b93a75dc9d66f4a": { "StackSize": 5 },	// Heineken
+		// "66d552942441cb47e882c4b9": { "StackSize": 5 },	// Stella Artois
+		// "66d6144f0c7d69830cc85344": { "StackSize": 5 },	// RockaHorse Brewery's LSD Energy Beer
+		// "6761b213607f9a6f79017b37": { "StackSize": 5 },	// Doritos Tortilla Chips: Nacho Cheese Flavored
+		// "682a818a542cd1c701793865": { "StackSize": 5 },	// Doritos Tortilla Chips: Cool Ranch Flavored
+		// "68242abf2136da7425ccd556": { "StackSize": 5 },	// Crunchy Cheetos
+		// "6829e3ab689244db62f531e7": { "StackSize": 5 },	// Crunchy Flamin Hot Cheetos
+		// "682a81d3a9bd9fdb7848ddad": { "StackSize": 5 },	// Puffed Flamin Hot Cheetos
+		// "682a81f5b23ee6fa5c29000a": { "StackSize": 5 },	// Cheeto Puffs
+		// "682a820d30a50a46da4ad63e": { "StackSize": 5 },	// Funyuns
+		// "681da51bd75946e84fae7998": { "StackSize": 5 },	// Hiram Walker's Ten High Bourbon Whiskey
+		// "681dabc4b28be6e1b43e5982": { "StackSize": 5 },	// Jägermeister
+		// "66d5294bb2732bbf0d7f51b3": { "StackSize": 5 },	// Four Loko Watermelon
+		// "66d670424a66c0453ce2b2e0": { "StackSize": 5 },	// Blue Mountain Four Loko
+		// "66d6708ae974feef81150037": { "StackSize": 5 },	// Orange Four Loko
+		// "66d670dc60343990107f8596": { "StackSize": 5 },	// Peach Four Loko
+		// "66d67160c06816935ffd7c3a": { "StackSize": 5 },	// Grape Four Loko
+		// "66d6719af77b8afdcb33671d": { "StackSize": 5 },	// Fruit Punch Four Loko
+		// "66d671b5129b17aa1a2c4ef4": { "StackSize": 5 },	// Strawberry Lemonade Four Loko
+		// "66d672114797ef093ace89cd": { "StackSize": 5 },	// Lemonade Four Loko
+		// "66d6724a2d614534afc673ca": { "StackSize": 5 },	// Mango Four Loko
+		// "68301e495101b8e85725a5bd": { "StackSize": 5 },	// Black Cherry Four Loko
+		// "683020897a1984bc86e014e9": { "StackSize": 5 },	// Sour Melon Four Loko
+		// "683022ff5fd925a8327e42c0": { "StackSize": 5 },	// Sour Apple Four Loko
+		// "6830243106b81cc888494d1c": { "StackSize": 5 },	// Margarita Four Loko
+		// "683024f6fac28eb32fdf9d7c": { "StackSize": 5 },	// Four Loko Red
+		// "683025c0600c37a6b8f5d337": { "StackSize": 5 },	// Sour Galactic Punch Four Loko
+		// "683026d32570c28259f7c77e": { "StackSize": 5 },	// Four Loko Gold
+		// "6830271ac5628c92cf9a6f0b": { "StackSize": 5 },	// Four Loko Bold: Blaze
+		// "68302864c2c90f1024ee4779": { "StackSize": 5 },	// Four Loko Bold: Frost
+		// "683028f8de12b685fc244737": { "StackSize": 5 },	// Four Loko Bold: Storm
+		// "66d3cadda5946c9b0c4d7148": { "StackSize": 5 },	// Red Bull
+		// "66d4f8b717dcce4ae2252123": { "StackSize": 5 },	// Dragonfruit Red Bull
+		// "66d4f9274de617daa8438ab4": { "StackSize": 5 },	// Blueberry Red Bull
+		// "66d4f936a8631392eccf23b9": { "StackSize": 5 },	// Strawberry Apricot Red Bull
+		// "66d4f93e41ef41636be3c8dc": { "StackSize": 5 },	// Peach Nectarine Red Bull
+		// "66d4f947eb04da7c681d40db": { "StackSize": 5 },	// Watermelon Red Bull
+		// "66d4f951b53df28c0cab33e5": { "StackSize": 5 },	// Tropical Red Bull
+		// "681fb4d7dc58b0f8a0855fdf": { "StackSize": 5 },	// Coconut Berry Red Bull
+		// "681fb5f7fc78e5a2461e4072": { "StackSize": 5 },	// Pink Edition Wild Berries Red Bull
+		// "681fb688c241ca5128154c90": { "StackSize": 5 },	// Summer Edition White Peach Red Bull
+		// "681fb6ea16af88c95d79c886": { "StackSize": 5 },	// Winter Edition Iced Vanilla Berry Red Bull
+		// "681fb764a0a922cd836b2796": { "StackSize": 5 },	// Sea Blue Edition Juneberry Flavored Red Bull
+		// "681fc32c7f015db07873dd99": { "StackSize": 5 },	// Green Edition Caruba Elderflower Red Bull
+		// "681fc39c1fcfd7b450a77665": { "StackSize": 5 },	// Spring Edition Grapefruit Blossom Elderflower Red Bull
+		
 		// Info items
 		"6389c92d52123d5dd17f8876": { "StackSize": 5 },		// Advanced Electronic Materials textbook
 		"62a09e73af34e73a266d932a": { "StackSize": 5 },		// BakeEzy cook book
