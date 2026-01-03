@@ -6,8 +6,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<OutputType>Library</OutputType>
-		<Version>1.2.5</Version>
+		<Version>1.2.5.0</Version>
+		<InformationalVersion>1.2.5.0</InformationalVersion>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="SPTarkov.Common" Version="4.0.0" />
