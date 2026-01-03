@@ -25,7 +25,6 @@ namespace BarterItemsStacksClient
             Settings.Init(Config);
 
             new UpdateItemViewPatch().Enable();
-            // new CheckmarkPositionPatch().Enable();
             new MergePatch().Enable();
             new TransferMaxPatch().Enable();
             new HideoutMethod23Patch().Enable();
@@ -35,7 +34,6 @@ namespace BarterItemsStacksClient
             new RepaitKitStackUsePatch().Enable();
             new PlaceItemTriggerPatch().Enable();
             new PlaceItemProtectPatch().Enable();
-            new StacksInSpecialSlots().Enable();
             new ConvertOperationResultToOperationPatch().Enable();
 
             if (HarmonyLib.AccessTools.TypeByName("MergeConsumables.Patches.ExecutePossibleAction_Patch") != null)

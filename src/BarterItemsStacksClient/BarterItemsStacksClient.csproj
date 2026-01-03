@@ -4,6 +4,7 @@
     <TargetFramework>netstandard21</TargetFramework>
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
+	<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
