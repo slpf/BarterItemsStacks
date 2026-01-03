@@ -1,4 +1,4 @@
 <Solution>
-	<Project Path="BarterItemsStacksClient/BarterItemsStacksClient.csproj" Id="e27f8fef-4003-4496-b6d5-73fd7a314b49" />
-	<Project Path="BarterItemsStacks/BarterItemsStacks.csproj" />
+	<Project Path="src/BarterItemsStacksClient/BarterItemsStacksClient.csproj"/>
+	<Project Path="src/BarterItemsStacks/BarterItemsStacks.csproj" />
 </Solution>

@@ -3,4 +3,5 @@
 bin/
 obj/
 launchSettings.json
-BarterItemsStacks.sln.DotSettings.user
+*.sln.DotSettings.user
+*.csproj.DotSettings.user

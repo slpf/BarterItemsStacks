@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard21</TargetFramework>
+    <OutputType>Library</OutputType>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>embedded</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugType>embedded</DebugType>
+    <Optimize>true</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SPTRefDir>../../..</SPTRefDir>
+    
+    <AssemblySearchPaths>
+      $(SPTRefDir)/BepInEx/core;
+      $(SPTRefDir)/BepInEx/plugins/spt;
+      $(SPTRefDir)/BepInEx/plugins/spt/ConfigurationManager;
+      $(SPTRefDir)/EscapeFromTarkov_Data/Managed;
+      $(AssemblySearchPaths);
+    </AssemblySearchPaths>
+
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyAssemblyCopyrightAttribute>false</GenerateAssemblyAssemblyCopyrightAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony" />
+    <Reference Include="BepInEx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ConfigurationManager" />
+    <Reference Include="spt-common" />
+    <Reference Include="spt-core" />
+    <Reference Include="spt-custom" />
+    <Reference Include="spt-debugging" />
+    <Reference Include="spt-reflection" />
+    <Reference Include="spt-singleplayer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json" />
+    <Reference Include="Assembly-CSharp" />
+    <Reference Include="Comfort" />
+    <Reference Include="Comfort.Unity" />
+    <Reference Include="ItemComponent.Types" />
+    <Reference Include="Unity.TextMeshPro" />
+    <Reference Include="UnityEngine.CoreModule" />
+    <Reference Include="UnityEngine" />
+    <Reference Include="UnityEngine.UI" />
+    <Reference Include="Sirenix.Serialization" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Prevent copying of references to output -->
+    <Reference Update="@(Reference)">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
