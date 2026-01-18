@@ -10,7 +10,7 @@ using BarterItemsStacksClient.Patches.UIGridItemView;
 
 namespace BarterItemsStacksClient
 {
-    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.2.5")]
+    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.3.0")]
     [BepInDependency("com.lacyway.mc", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin

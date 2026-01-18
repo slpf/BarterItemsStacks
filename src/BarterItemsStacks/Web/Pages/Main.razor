@@ -1,0 +1,137 @@
+@page "/bis"
+
+<style>@(new MarkupString(EmbeddedStyles))</style>
+<script>
+    @(new MarkupString(EmbeddedScripts));
+    window.inputFilters && window.inputFilters.startObserver && window.inputFilters.startObserver();
+</script>
+
+<PageTitle>Barter Items Stacks - Config Editor</PageTitle>
+
+<div>
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <h1>Barter Items Stacks</h1>
+        <div style="padding: 12px; border: 1px solid #cc0000; border-radius: 8px;">
+            <b>Error:</b> @_error
+        </div>
+    }
+    else if (_viewCategories is null)
+    {
+        <h1>Barter Items Stacks</h1>
+        <p>Loading...</p>
+    }
+    else
+    {
+        <div class="header">
+            <h1>Barter Items Stacks</h1>
+            <button class="saveButton" type="button" @onclick="SaveAsync" disabled="@_isSaving">SAVE CONFIG</button>
+        </div>
+
+        <Search SearchFunc="SearchItemsAsync"
+                OnSelect="SelectSuggestion"
+                ItemImageSrc="ItemImageSrc"
+                RefreshToken="_searchRefreshToken" />
+        
+        @if (_parentOverrides.Count > 0)
+        {
+            <details open>
+                <summary style="cursor: pointer;">
+                    <b>Parents</b>
+                </summary>
+
+                <div>
+                    @foreach (var r in _parentOverrides)
+                    {
+                        <ItemRow Item="r" Highlight="(r.TemplateId == _highlightTplId)" 
+                                 ItemImageSrc="ItemImageSrc" OnDelete="RemoveItem" />
+                    }
+                </div>
+            </details>
+        }
+
+        <!-- Categories -->
+        @foreach (var c in _viewCategories)
+        {
+            <details open="@IsCategoryOpen(c.Name)">
+                <summary style="cursor: pointer;" tabindex="-1"
+                         @onclick="() => ToggleCategory(c.Name)"
+                         @onclick:preventDefault="true">
+                    <div>
+                        <b>@c.Name</b>
+                        <span class="o7"> — items: @c.TotalItems</span>
+                    </div>
+                    
+                    <div class="fields">
+                        <div class="field">
+                            <input class="summaryInput" type="text"
+                                   data-filter="uint"
+                                   placeholder="Stack Size"
+                                   value="@GetCategoryBulk(c.Name).MaxStackSize"
+                                   @oninput="e => OnCategoryBulkInput(c.Name, BulkField.MaxStackSize, e)" />
+                        </div>
+
+                        <div class="field">
+                            <input class="summaryInput" type="text"
+                                   data-filter="uint"
+                                   placeholder="Resources"
+                                   value="@GetCategoryBulk(c.Name).MaxResources"
+                                   @oninput="e => OnCategoryBulkInput(c.Name, BulkField.MaxResources, e)" />
+                        </div>
+
+                        <div class="field">
+                            <input class="summaryInput" type="text"
+                                   data-filter="uint"
+                                   placeholder="Height"
+                                   value="@GetCategoryBulk(c.Name).Height"
+                                   @oninput="e => OnCategoryBulkInput(c.Name, BulkField.Height, e)" />
+                        </div>
+
+                        <div class="field">
+                            <input class="summaryInput" type="text"
+                                   data-filter="uint"
+                                   placeholder="Width"
+                                   value="@GetCategoryBulk(c.Name).Width"
+                                   @oninput="e => OnCategoryBulkInput(c.Name, BulkField.Width, e)"/>
+                        </div>
+                        
+                        <div class="field">
+                            <input class="summaryInput" type="text"
+                                   placeholder="Weight Mult"
+                                   data-filter="udouble"
+                                   value="@GetCategoryBulk(c.Name).Weight"
+                                   @oninput="e => OnCategoryBulkInput(c.Name, BulkField.Weight, e)" />
+                        </div>
+                        
+                        <div class="field">
+                            <input class="summaryInput" type="text"
+                                   placeholder="Price Mult"
+                                   data-filter="udouble"
+                                   value="@GetCategoryBulk(c.Name).Price"
+                                   @oninput="e => OnCategoryBulkInput(c.Name, BulkField.Price, e)" />
+                        </div>
+                    </div>
+
+                    <button type="button" title="Remove all lines from category"
+                            @onclick="() => RemoveCategoryItems(c.Name)"
+                            @onclick:stopPropagation="true">REMOVE</button>
+                </summary>
+
+                <div>
+                    @foreach (var r in c.Items)
+                    {
+                        <ItemRow Item="r" Highlight="(r.TemplateId == _highlightTplId)" 
+                                 ItemImageSrc="ItemImageSrc" OnDelete="RemoveItem" />
+                    }
+                </div>
+            </details>
+        }
+    }
+    
+    @if (!string.IsNullOrWhiteSpace(_toastMessage))
+    {
+        <div class="toast @(_toastVisible ? "toast--show" : "")">@_toastMessage</div>
+    }
+
+    <button type="button" class="scrollTop" title="Scroll to top" @onclick="ScrollToTopAsync">▲</button>
+</div>

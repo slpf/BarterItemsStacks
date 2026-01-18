@@ -1,0 +1,55 @@
+﻿<div class="searchWrap">
+    <input class="search"
+           value="@_searchText"
+           @oninput="OnSearchInput"
+           @onfocus="OnSearchFocus"
+           @onblur="OnSearchBlur"
+           placeholder="@Placeholder" />
+
+    @if (_showSuggestions)
+    {
+        <div class="suggest">
+            @if (_suggestions.Count == 0)
+            {
+                <div>Nothing found...</div>
+            }
+            else
+            {
+                @foreach (var s in _suggestions)
+                {
+                    <div class="suggestItem" @onmousedown="() => SelectSuggestionAsync(s.TemplateId)">
+                        <div class="suggestRow">
+                            <div>
+                                <div class="suggestImgBox">
+                                    <img class="suggestImg"
+                                         src="@SafeImageSrc(s.TemplateId)"
+                                         alt="@s.TemplateId" />
+                                </div>
+
+                                <div style="min-width:0;">
+                                    @if (!string.IsNullOrWhiteSpace(s.Name))
+                                    {
+                                        <div class="bold">@s.Name</div>
+                                        <div class="mono o7">@s.TemplateId</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="bold">@s.TemplateId</div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div>
+                                @if (s.InConfig)
+                                {
+                                    <span class="o7 fs12">in config</span>
+                                }
+                                <span class="bold fs12">@s.Category</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>

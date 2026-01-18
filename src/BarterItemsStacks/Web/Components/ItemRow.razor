@@ -1,0 +1,72 @@
+﻿<div id="@($"row-{Item.TemplateId}")" class="cardRow @(Highlight ? "highlight" : "")">
+    <div class="imgBox">
+        <img class="img" src="@SafeImageSrc(Item.TemplateId)" alt="@Item.TemplateId" />
+    </div>
+    
+    <div class="cardMain">
+        <div class="cardMainTop">
+            @if (!string.IsNullOrWhiteSpace(Item.Name) && !string.Equals(Item.Name, "null", StringComparison.OrdinalIgnoreCase))
+            {
+                <div class="cardTitle">@Item.Name</div>
+                <div class="cardId mono">@Item.TemplateId</div>
+            }
+            else
+            {
+                <div class="cardTitle">@Item.TemplateId</div>
+            }
+        </div>
+        <div class="cardMainBottom">
+            <div class="fields">
+                <div class="field">
+                    <input type="text" placeholder="default"
+                           data-filter="uint"
+                           @bind-value="Item.MaxStackSizeText"
+                           @bind-value:event="oninput" />
+                    <label>Stack Size</label>
+                </div>
+
+                <div class="field">
+                    <input type="text" placeholder="default"
+                           data-filter="uint"
+                           @bind-value="Item.MaxResourcesText"
+                           @bind-value:event="oninput" />
+                    <label>Resources</label>
+                </div>
+
+                <div class="field">
+                    <input type="text" placeholder="default"
+                           data-filter="uint"
+                           @bind-value="Item.HeightText"
+                           @bind-value:event="oninput" />
+                    <label>Height</label>
+                </div>
+
+                <div class="field">
+                    <input type="text" placeholder="default"
+                           data-filter="uint"
+                           @bind-value="Item.WidthText"
+                           @bind-value:event="oninput"/>
+                    <label>Width</label>
+                </div>
+                
+                <div class="field">
+                    <input type="text" placeholder="default"
+                           data-filter="udouble"
+                           @bind-value="Item.WeightText"
+                           @bind-value:event="oninput" />
+                    <label>Weight Mult</label>
+                </div>
+                
+                <div class="field">
+                    <input type="text" placeholder="default"
+                           data-filter="udouble"
+                           @bind-value="Item.PriceText"
+                           @bind-value:event="oninput" />
+                    <label>Price Mult</label>
+                </div>
+            </div>
+            
+            <button type="button" title="Remove line" @onclick="() => OnDelete.InvokeAsync(Item.TemplateId)">REMOVE</button>
+        </div>
+    </div>
+</div>

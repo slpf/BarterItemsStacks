@@ -1,0 +1,380 @@
+﻿body {
+    background-color: #222;
+    color: #999;
+}
+
+h1 {
+    color: #998766;
+}
+
+.page {
+    max-width: 1000px;
+    margin: 0 auto;
+    font-family: "Bender", sans-serif;
+}
+
+@media (max-width: 1100px) {
+    .page {
+        margin: 0 16px; 
+    }
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.header h1 {
+    margin: 0;
+}
+
+.header h1:focus {
+    outline: none;
+}
+
+.header button {
+    margin-left: auto;
+}
+
+/* Search style */
+.searchWrap {
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    position: relative;
+    margin: 24px 0 24px 0;
+}
+
+.search {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background-color: #222;
+    font-family: 'Bender', sans-serif;
+    color: #999;
+    outline: none;
+    transition-duration: 0.5s;
+}
+
+.search:focus, .search:hover {
+    border-color: #555;
+}
+
+.search::placeholder {
+    color: #555;
+}
+
+/* Search suggestion */
+.suggest {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+    z-index: 9999;
+    color: #999;
+}
+
+.suggest > div {
+    padding: 12px 16px;
+    background: #222;
+}
+
+.suggestItem {
+    cursor: pointer;
+    transition-duration: 0.15s;
+}
+
+.suggestItem:hover {
+    background: #2a2a2a;
+}
+
+.suggestItem:not(:first-of-type) {
+    border-top: 1px solid #333;
+}
+
+.suggestRow, .suggestRow > div {
+    display: flex; 
+    align-items: center; 
+    gap: 10px;
+    min-width:0;
+}
+
+.suggestRow > div:first-child {
+    flex:1;
+}
+
+.suggestRow div {
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+}
+
+.suggestImgBox {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background: #2f2f2f;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.suggestImg {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain !important;
+    display: block;
+}
+
+/* Categories */
+
+details {
+    border: 1px solid #333; !important;
+    border-radius: 8px;
+    background: #333;
+    margin-top: 16px;
+}
+
+summary {
+    min-height: 34px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    margin: 8px 16px;
+    list-style: none;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+summary > div:first-of-type{
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+summary .fields {
+    justify-content: flex-end;
+}
+
+summary:focus {
+    outline: none;
+}
+
+.cardRow {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px;
+    border-top: 1px solid #333;
+    background: #222;
+    transition-duration: 0.2s;
+}
+
+.cardRow:last-of-type {
+    border-radius: 0 0 8px 8px;
+}
+
+.imgBox {
+    width: 72px;
+    height: 72px;
+    border-radius: 4px;
+    background: #333;
+    order: 0;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    display: block;
+}
+
+.cardMain {
+    order: 1;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.cardMainTop {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cardTitle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.cardId {
+    white-space: nowrap;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.cardMainBottom {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fields {
+    display: flex;
+    gap: 12px;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.field input {
+    width: 88px;
+    max-width: 88px;
+    padding: 4px 8px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+    margin-bottom: 2px;
+    font-family: 'Bender', sans-serif;
+    color: #999;
+    outline: none;
+    background-color: #222;
+    transition-duration: 0.5s;
+}
+
+.field input:focus, .field input:hover {
+    border-color: #555;
+}
+
+.field input::placeholder {
+    color: #555;
+}
+
+.summaryInput {
+    margin: 0 !important;
+    padding: 8px !important;
+    width: 100%;
+}
+
+.summaryInput::placeholder {
+    font-size: 10px;
+    
+}
+
+.field label {
+    display: block;
+    font-size: 10px;
+    opacity: .7;
+    padding-left: 10px;
+}
+
+button {
+    white-space: nowrap;
+    color: #999;
+    background-color: #333;
+    border-radius: 4px;
+    font-weight: 600;
+    padding: 10px 8px 8px 8px;
+    transition-duration: 0.3s;
+    text-align: center;
+    outline: none;
+    border: none;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+button:hover {
+    background: #500;
+}
+
+.saveButton:hover,
+.saveButton:focus {
+    background: #050;
+}
+
+.highlight {
+    background-color: #272727;
+}
+
+/* other */
+.mono {
+    font-family: monospace;
+}
+
+.o7 {
+    opacity: .7;
+}
+
+.fs12 {
+    font-size: 12px;
+}
+
+.bold {
+    font-weight: 600;
+}
+
+.toast {
+    position: fixed;
+    top: 24px;
+    right: 32px;
+    z-index: 20000;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px 14px;
+    max-width: 360px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    color: #999;
+    opacity: 0;
+    pointer-events: none;
+    transition-duration: 0.3s;
+}
+
+.toast.toast--show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.scrollTop {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 999999;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scrollTop:hover {
+    background: #444;
+}
