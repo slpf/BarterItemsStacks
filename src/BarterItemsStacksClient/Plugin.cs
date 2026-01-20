@@ -10,13 +10,12 @@ using BarterItemsStacksClient.Patches.UIGridItemView;
 
 namespace BarterItemsStacksClient
 {
-    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.3.0")]
+    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.3.1")]
     [BepInDependency("com.lacyway.mc", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
-        public static HashSet<string> StackItemsIDs { get; private set; } = new HashSet<string>();
 
         private void Awake()
         {
@@ -44,6 +43,11 @@ namespace BarterItemsStacksClient
             if (HarmonyLib.AccessTools.TypeByName("UIFixes.SortPatches+StackFirstPatch") != null)
             {
                 new UIFixesStackAllPatch().Enable();
+            }
+            
+            if (HarmonyLib.AccessTools.TypeByName("StashManagementHelper.Helpers.ItemManager") != null)
+            {
+                new StashManagementHelperMergePatch().Enable();
             }
         }
     }
