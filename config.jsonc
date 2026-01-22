@@ -1,20 +1,13 @@
 {
 	"Items": {
-		// Parents
-		"5448e8d04bdc2ddf718b4569": { "StackSize": 5 },	// Food
-		"5448e8d64bdc2dce718b4568": { "StackSize": 5 },	// Drinks
-		"5448ecbe4bdc2d60728b4568": { "StackSize": 5 },	// Info items
-		"5448f39d4bdc2d0a728b4568": { "StackSize": 5 },	// Medkits
-		"5448f3a14bdc2d27728b4569": { "StackSize": 5 },	// Drugs
-		"5448f3ac4bdc2dce718b4569": { "StackSize": 5 },	// Injury treatment
-		"57864c8c245977548867e7f1": { "StackSize": 5 },	// Medical supplies
-		"6759673c76e93d8eb20b2080": { "StackSize": 5 },	// Flyers
-		"543be5dd4bdc2deb348b4569": { "StackSize": 20000000 },	// Money
-		"5448f3a64bdc2d60728b456a": { "StackSize": 10, "MaxResource": 1 },	// Injectors
 		// Cash
+		"5449016a4bdc2d6f028b456f": { "StackSize": 20000000 },	// Roubles
+		"5696686a4bdc2da3298b456a": { "StackSize": 20000000 },	// Dollars
+		"569668774bdc2da2298b4568": { "StackSize": 20000000 },	// Euros
 		"5d235b4d86f7742e017bc88a": { "StackSize": 2000 },		// GP coin
-		// Medication
-		"544fb3f34bdc2d03748b456a": { "StackSize": 10, "MaxResource": 1 },		// Morphine injector
+		"6656560053eaaa7a23349c86": { "StackSize": 20 },		// Lega Medal
+		"59faff1d86f7746c51718c9c": { "StackSize": 20 },		// Physical Bitcoin
+
 		// Barter items
 		"5bc9b355d4351e6d1509862a": { "StackSize": 5 },		// #FireKlean gun lube
 		"5bc9be8fd4351e00334cae6e": { "StackSize": 5 },		// 42 Signature Blend English Tea
@@ -105,7 +98,6 @@
 		"5e2af29386f7746d4159f077": { "StackSize": 10 },	// KEKTAPE duct tape
 		"66572c82ad599021091c6118": { "StackSize": 5 },		// Killa figurine
 		"5c0530ee86f774697952d952": { "StackSize": 5 },		// LEDX Skin Transilluminator
-		"6656560053eaaa7a23349c86": { "StackSize": 5 },		// Lega Medal
 		"5d1b392c86f77425243e98fe": { "StackSize": 20 },	// Light bulb
 		"60b0f7057897d47c5b04ab94": { "StackSize": 5 },		// Loot Lord plushie
 		"60b0f561c4449e4cb624c1d7": { "StackSize": 5 },		// LVNDMARK's rat poison
@@ -142,7 +134,6 @@
 		"679b9d43597ba2ed120c3d44": { "StackSize": 5 },		// Petya Crooker figurine
 		"5d1b313086f77425227d1678": { "StackSize": 20 },	// Phase control relay
 		"5d03775b86f774203e7e0c4b": { "StackSize": 5 },		// Phased array element
-		"59faff1d86f7746c51718c9c": { "StackSize": 5 },		// Physical Bitcoin
 		"59e366c186f7741778269d85": { "StackSize": 10 },	// Piece of plexiglass
 		"5d1b3a5d86f774252167ba22": { "StackSize": 10 },	// Pile of meds
 		"619cbfccbedcde2f5b3f7bdd": { "StackSize": 5 },		// Pipe grip wrench
@@ -214,9 +205,7 @@
 		"679b9d55708cfcb2060b9ae3": { "StackSize": 5 },		// Xenoalien figurine
 		"590c346786f77423e50ed342": { "StackSize": 10 },	// Xenomorph sealing foam
 		"56742c2e4bdc2d95058b456d": { "StackSize": 20 },	// Zibbo lighter
-		// Repair kits
-		"591094e086f7747caa7bb2ef": { "StackSize": 5, "MaxResource": 3000 },	// Body armor repair kit
-		"5910968f86f77425cf569c32": { "StackSize": 5, "MaxResource": 3000 },	// Weapon repair kit
+
 		// Spec items
 		"67ab3d4b83869afd170fdd3f": { "StackSize": 5 },		// BBQ-S43 gas torch
 		"5f4f9eb969cdc30ff33f09db": { "StackSize": 5 },		// EYE MK.2 professional hand-held compass
@@ -227,6 +216,26 @@
 		"666b11055a706400b717cfa5": { "StackSize": 5 },		// Tripwire installation kit
 		"678fa929819ddc4c350c0317": { "StackSize": 5 },		// Valve handwheel
 		"61605e13ffa6e502ac5e7eef": { "StackSize": 5 },		// Vortex Ranger 1500 rangefinder
-		"5b4391a586f7745321235ab2": { "StackSize": 5 }		// WI-FI Camera
+		"5b4391a586f7745321235ab2": { "StackSize": 5 },		// WI-FI Camera
+
+		// Info items
+		"6389c92d52123d5dd17f8876": { "StackSize": 5 },		// Advanced Electronic Materials textbook
+		"62a09e73af34e73a266d932a": { "StackSize": 5 },		// BakeEzy cook book
+		"590c645c86f77412b01304d9": { "StackSize": 5 },		// Diary
+		"660bbc47c38b837877075e47": { "StackSize": 5 },		// Encrypted flash drive
+		"5c12613b86f7743bbe2c3f76": { "StackSize": 5 },		// Intelligence folder
+		"679b992329acd1f2f60985a5": { "StackSize": 5 },		// Labrys research notes
+		"62a0a16d0b9d3c46de5b6e97": { "StackSize": 5 },		// Military flash drive
+		"590c37d286f77443be3d7827": { "StackSize": 5 },		// SAS drive
+		"590c621186f774138d11ea29": { "StackSize": 5 },		// Secure Flash drive
+		"61bf7c024770ee6f9c6b8b53": { "StackSize": 5 },		// Secure magnetic tape cassette
+		"6389c8fb46b54c634724d847": { "StackSize": 3 },		// Silicon Optoelectronic Integrated Circuits textbook
+		"590c651286f7741e566b6461": { "StackSize": 5 },		// Slim diary
+		"590c392f86f77444754deb29": { "StackSize": 5 },		// SSD drive
+		"590c639286f774151567fa95": { "StackSize": 5 },		// Tech manual
+		"6389c8c5dbfd5e4b95197e6b": { "StackSize": 5 },		// TerraGroup "Blue Folders" materials
+		"6889e4cd3ff7e9cfbc0c507c": { "StackSize": 5 },		// Thumb drive with military data
+		"62a0a124de7ac81993580542": { "StackSize": 5 },		// Topographic survey maps
+		"62a09e974f842e1bd12da3f0": { "StackSize": 5 }		// Video cassette with the Cyborg Killer movie
 	}
 }
