@@ -15,6 +15,7 @@ using SPTarkov.Server.Core.Services;
 using SPTarkov.Server.Core.Utils;
 using SPTarkov.Server.Core.Utils.Json.Converters;
 using SPTarkov.Server.Web;
+using Path = System.IO.Path;
 
 [assembly: AssemblyProduct(ModInfo.Name)]
 [assembly: AssemblyTitle(ModInfo.Name)]
@@ -149,6 +150,13 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
             
             _lastApplied.Clear();
 
+            var configPath = Path.Combine(pathToMod, ItemsConfig.FileName);
+            if (!File.Exists(configPath))
+            {
+                DefaultConfig.Create(configPath);
+                logger.LogWithColor("[BarterItemsStacks] Default config generated.", LogTextColor.Green, LogBackgroundColor.Black);
+            }
+            
             var config = modHelper.GetJsonDataFromFile<ItemsConfig>(pathToMod, ItemsConfig.FileName);
 
             foreach (var item in config.Items)
