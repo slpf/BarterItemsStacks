@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text.Json.Serialization;
+using BarterItemsStack;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Extensions;
@@ -15,21 +16,29 @@ using SPTarkov.Server.Core.Utils;
 using SPTarkov.Server.Core.Utils.Json.Converters;
 using SPTarkov.Server.Web;
 
+[assembly: AssemblyProduct(ModInfo.Name)]
+[assembly: AssemblyTitle(ModInfo.Name)]
+[assembly: AssemblyDescription(ModInfo.Description)]
+[assembly: AssemblyCopyright(ModInfo.Copyright)]
+[assembly: AssemblyVersion(ModInfo.Version)]
+[assembly: AssemblyFileVersion(ModInfo.Version)]
+[assembly: AssemblyInformationalVersion(ModInfo.Version)]
+
 namespace BarterItemsStacks;
 
 public record ModMetadata : AbstractModMetadata, IModWebMetadata
 {
-    public override string ModGuid { get; init; } = "com.slpf.barteritemsstacks";
-    public override string Name { get; init; } = "Barter Items Stacks";
-    public override string Author { get; init; } = "SLPF";
+    public override string ModGuid { get; init; } = ModInfo.Guid;
+    public override string Name { get; init; } = ModInfo.Name;
+    public override string Author { get; init; } = ModInfo.Author;
     public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.3.1");
+    public override SemanticVersioning.Version Version { get; init; } = new(ModInfo.Version);
     public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
     public override List<string>? Incompatibilities { get; init; }
     public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
     public override string? Url { get; init; }
     public override bool? IsBundleMod { get; init; }
-    public override string? License { get; init; } = "MIT";
+    public override string? License { get; init; } = ModInfo.License;
 }
 
 public class ItemsConfig

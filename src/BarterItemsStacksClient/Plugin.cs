@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using System.Collections.Generic;
+using System.Reflection;
+using BarterItemsStack;
 using BarterItemsStacksClient.Patches;
 using BarterItemsStacksClient.Patches.Compatibility;
 using BarterItemsStacksClient.Patches.Hideout;
@@ -8,9 +9,17 @@ using BarterItemsStacksClient.Patches.Interactions;
 using BarterItemsStacksClient.Patches.Quest;
 using BarterItemsStacksClient.Patches.UIGridItemView;
 
+[assembly: AssemblyProduct(ModInfo.Name)]
+[assembly: AssemblyTitle(ModInfo.Name)]
+[assembly: AssemblyDescription(ModInfo.Description)]
+[assembly: AssemblyCopyright(ModInfo.Copyright)]
+[assembly: AssemblyVersion(ModInfo.Version)]
+[assembly: AssemblyFileVersion(ModInfo.Version)]
+[assembly: AssemblyInformationalVersion(ModInfo.Version)]
+
 namespace BarterItemsStacksClient
 {
-    [BepInPlugin("com.slpf.barteritemsstacks", "BarterItemsStacksClient", "1.3.1")]
+    [BepInPlugin(ModInfo.Guid, ModInfo.ClientName, ModInfo.Version)]
     [BepInDependency("com.lacyway.mc", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.tyfon.uifixes", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin

@@ -4,7 +4,6 @@
     <TargetFramework>netstandard21</TargetFramework>
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
-	<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -30,12 +29,15 @@
       $(SPTRefDir)/EscapeFromTarkov_Data/Managed;
       $(AssemblySearchPaths);
     </AssemblySearchPaths>
+  </PropertyGroup>
 
+  <PropertyGroup>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyAssemblyCopyrightAttribute>false</GenerateAssemblyAssemblyCopyrightAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
   </PropertyGroup>
 
   <ItemGroup>
@@ -73,4 +75,7 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\ModInfo.cs" />
+  </ItemGroup>
 </Project>

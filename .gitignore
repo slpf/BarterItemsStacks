@@ -5,3 +5,7 @@ obj/
 launchSettings.json
 *.sln.DotSettings.user
 *.csproj.DotSettings.user
+
+**/Assets/items/*
+!**/Assets/items/items.zip
+!**/Assets/items/unknown.webp
