@@ -5,93 +5,92 @@ namespace BarterItemsStacksClient
 {
     internal class Utils
     {
-        internal static bool IsFull(float cur, float max)
-        {
-            const float t = 0.5f;
-            return cur >= max - t;
-        }
-
-        internal static bool BothFull(float irCur, float irmax, float trCur, float trMax)
-        {
-            return IsFull(irCur, irmax) && IsFull(trCur, trMax);
-        }
-
-        internal static bool TryGet<T>(Item item, out float cur, out float max) where T : IItemComponent
+        internal static bool TryGetResource(Item item, out float cur, out float max)
         {
             cur = 0f;
             max = 0f;
 
-            if (typeof(T) == typeof(ResourceComponent))
+            var resource = item.GetItemComponent<ResourceComponent>();
+            if (resource != null)
             {
-                var c = item.GetItemComponent<ResourceComponent>();
-                if (c == null) 
-                    return false;
-
-                cur = c.Value;
-                max = c.MaxResource;
+                cur = resource.Value;
+                max = resource.MaxResource;
                 return true;
             }
 
-            if (typeof(T) == typeof(MedKitComponent))
+            var medkit = item.GetItemComponent<MedKitComponent>();
+            if (medkit != null)
             {
-                var c = item.GetItemComponent<MedKitComponent>();
-                if (c == null) 
-                    return false;
-
-                cur = c.HpResource;
-                max = c.MaxHpResource;
-
+                cur = medkit.HpResource;
+                max = medkit.MaxHpResource;
                 return true;
             }
 
-            if (typeof(T) == typeof(FoodDrinkComponent))
+            var food = item.GetItemComponent<FoodDrinkComponent>();
+            if (food != null)
             {
-                var c = item.GetItemComponent<FoodDrinkComponent>();
-                if (c == null) 
-                    return false;
-
-                cur = c.HpPercent;       
-                max = c.MaxResource;
-
+                cur = food.HpPercent;
+                max = food.MaxResource;
                 return true;
             }
 
-            if (typeof(T) == typeof(RepairKitComponent))
+            var repair = item.GetItemComponent<RepairKitComponent>();
+            if (repair != null)
             {
-                var c = item.GetItemComponent<RepairKitComponent>();
-                if (c == null) 
-                    return false;
-
-                cur = c.Resource;      
+                cur = repair.Resource;
                 max = ((RepairKitsTemplateClass)item.Template).MaxRepairResource;
-
                 return true;
             }
-
-            throw new NotSupportedException($"TryGet<{typeof(T).Name}> is not supported.");
-        }
-
-        internal static bool CheckBothItems<T>(Item item, Item targetItem) where T : IItemComponent
-        {
-            if (!TryGet<T>(item, out var aCur, out var aMax) ||
-                !TryGet<T>(targetItem, out var bCur, out var bMax))
-                return true;
-
-            if (BothFull(aCur, aMax, bCur, bMax))
-                return true;
 
             return false;
         }
-
-        internal static bool ShouldSkip<T>(Item item, Item target) where T : IItemComponent
+        
+        internal static bool IsFullResource(Item item)
         {
-            if (!TryGet<T>(item, out var itemCur, out var itemMax))
-                return false;
+            if (!TryGetResource(item, out var cur, out var max))
+            {
+                return true;
+            }
 
-            if (!TryGet<T>(target, out var targetCur, out var targetMax))
-                return false;
+            return cur >= max - 0.5f;
+        }
+        
+        internal static bool CanMergeResources(Item item, Item targetItem)
+        {
+            bool itemHasResource = TryGetResource(item, out var aCur, out var aMax);
+            bool targetHasResource = TryGetResource(targetItem, out var bCur, out var bMax);
 
-            return BothFull(itemCur, itemMax, targetCur, targetMax);
+            if (!itemHasResource || !targetHasResource)
+            {
+                return true;
+            }
+
+            return aCur >= aMax - 0.5f && bCur >= bMax - 0.5f;
+        }
+        
+        internal static bool CanIgnoreFirStatus(Item item, Item targetItem)
+        {
+            if (Settings.FirStackableResources.Value && item is BarterItemItemClass && targetItem is BarterItemItemClass)
+            {
+                return true;
+            }
+
+            if (Settings.FirStackableMed.Value && item is MedsItemClass && targetItem is MedsItemClass)
+            {
+                return true;
+            }
+
+            if (Settings.FirStackableFoodDrinks.Value && item is FoodDrinkItemClass && targetItem is FoodDrinkItemClass)
+            {
+                return true;
+            }
+
+            if (Settings.FirStackableRepairKits.Value && item is RepairKitsItemClass && targetItem is RepairKitsItemClass)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

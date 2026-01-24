@@ -27,8 +27,7 @@ namespace BarterItemsStacksClient.Patches.Compatibility
                 return false;
             }
 
-            if (Utils.ShouldSkip<MedKitComponent>(itemContext.Item, targetItem) ||
-                Utils.ShouldSkip<FoodDrinkComponent>(itemContext.Item, targetItem))
+            if (Utils.CanMergeResources(itemContext.Item, targetItem))
             {
                 __result = true;
                 return false;

@@ -36,8 +36,8 @@ public class StashManagementHelperMergePatch : ModulePatch
             foreach (var grid in items.Grids)
             {
                 var stackableGroups = grid.Items
-                    .Where(i => i.Owner != null && i.StackObjectsCount < i.StackMaxSize)
-                    .GroupBy(i => new { i.TemplateId, i.SpawnedInSession })
+                    .Where(i => i.Owner != null && i.StackObjectsCount < i.StackMaxSize && Utils.IsFullResource(i))
+                    .GroupBy(i => new { i.TemplateId, IgnoreFir = Utils.CanIgnoreFirStatus(i, i) || i.SpawnedInSession })
                     .Where(g => g.Count() > 1)
                     .ToList();
 
