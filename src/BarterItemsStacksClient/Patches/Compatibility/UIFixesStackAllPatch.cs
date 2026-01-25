@@ -58,7 +58,6 @@ namespace BarterItemsStacksClient.Patches.Compatibility
 
         private static bool FindStackForMerge(IEnumerable<StashGridClass> grids, Item itemToMerge, out Item mergeableItem)
         {
-            int minimumStackSpace = itemToMerge.StackObjectsCount;
             bool ignoreFir = Utils.CanIgnoreFirStatus(itemToMerge, itemToMerge);
 
             mergeableItem = grids.SelectMany(x => x.Items)
@@ -67,7 +66,8 @@ namespace BarterItemsStacksClient.Patches.Compatibility
                 .Where(x => ignoreFir || x.SpawnedInSession == itemToMerge.SpawnedInSession)
                 .Where(x => x.StackObjectsCount < x.StackMaxSize)
                 .Where(Utils.IsFullResource)
-                .FirstOrDefault(x => minimumStackSpace <= x.StackMaxSize - x.StackObjectsCount);
+                .OrderByDescending(x => x.StackObjectsCount)
+                .FirstOrDefault();
 
             return mergeableItem != null;
         }

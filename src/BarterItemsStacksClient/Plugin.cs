@@ -43,7 +43,8 @@ namespace BarterItemsStacksClient
             new PlaceItemTriggerPatch().Enable();
             new PlaceItemProtectPatch().Enable();
             new ConvertOperationResultToOperationPatch().Enable();
-
+            new SortComparatorPatch().Enable();    
+            
             if (HarmonyLib.AccessTools.TypeByName("MergeConsumables.Patches.ExecutePossibleAction_Patch") != null)
             {
                 new MCExecutePossibleActionPatch().Enable();
