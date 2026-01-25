@@ -1,7 +1,8 @@
 .vs/
 .idea/
-bin/
-obj/
+**/bin/
+**/obj/
+**/build/
 launchSettings.json
 *.sln.DotSettings.user
 *.csproj.DotSettings.user

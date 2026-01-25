@@ -78,4 +78,12 @@
   <ItemGroup>
     <Compile Include="..\ModInfo.cs" />
   </ItemGroup>
+
+  <Target Name="CopyToBuildFolder" AfterTargets="Build">
+    <PropertyGroup>
+      <DestDir>$(MSBuildProjectDirectory)\..\..\build\BepInEx\plugins\</DestDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(DestDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DestDir)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

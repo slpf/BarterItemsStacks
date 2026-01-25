@@ -33,7 +33,15 @@
 		<Compile Include="..\ModInfo.cs" />
 	</ItemGroup>
 	<ItemGroup>
-	  <_ContentIncludedByDefault Remove="Components\ItemRow.razor" />
-	  <_ContentIncludedByDefault Remove="Components\Search.razor" />
+		<_ContentIncludedByDefault Remove="Components\ItemRow.razor" />
+		<_ContentIncludedByDefault Remove="Components\Search.razor" />
 	</ItemGroup>
+	
+	<Target Name="CopyToBuildFolder" AfterTargets="Build">
+		<PropertyGroup>
+			<DestDir>$(MSBuildProjectDirectory)\..\..\build\SPT\user\mods\BarterItemsStacks\</DestDir>
+		</PropertyGroup>
+		<MakeDir Directories="$(DestDir)" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DestDir)" SkipUnchangedFiles="true" />
+	</Target>
 </Project>
