@@ -3,24 +3,27 @@ using System.Collections.Generic;
 using System.Reflection;
 using EFT.InventoryLogic;
 using HarmonyLib;
+using JsonType;
 using SPT.Reflection.Patching;
 
 namespace BarterItemsStacksClient.Patches.UIGridItemView;
 
 public class SortComparatorPatch : ModulePatch
 {
-    private static readonly Dictionary<string, int> RarityOrder = new(StringComparer.OrdinalIgnoreCase)
+    private const int TaxonomyColorOffset = 12;
+    
+    private static readonly Dictionary<string, int> RarityOrder = new()
     {
-        { "#10a43a", 0 },   // UNKNOWN - dark green
-        { "#ca741f", 1 },   // CUSTOM2 - orange
-        { "#ca1f2b", 2 },   // CUSTOM - dark red
-        { "#FF4040", 3 },   // OVERPOWERED - red (banned)
-        { "#39FF14", 4 },   // UNOBTAINIUM - green
-        { "#FFD700", 5 },   // UBER - gold
-        { "#f6f15d", 6 },   // LEGENDARY - yellow
-        { "#9F5ACF", 7 },   // EPIC - violet
-        { "#2694da", 8 },   // RARE - blue
-        { "#FFFFFF", 9 },   // COMMON - white
+        { "1090630", 0 },    // UNKNOWN
+        { "13268011", 1 },   // CUSTOM2
+        { "13246263", 2 },   // CUSTOM
+        { "16728140", 3 },   // OVERPOWERED
+        { "3800864", 4 },    // UNOBTAINIUM
+        { "16766732", 5 },   // UBER
+        { "16183657", 6 },   // LEGENDARY
+        { "10443483", 7 },   // EPIC
+        { "2528486", 8 },    // RARE
+        { "16777227", 9 },   // COMMON
     };
     
     protected override MethodBase GetTargetMethod()
@@ -33,15 +36,6 @@ public class SortComparatorPatch : ModulePatch
     {
         int num;
         
-        int rarityX = GetRarityOrder(x);
-        int rarityY = GetRarityOrder(y);
-        num = rarityX.CompareTo(rarityY);
-        if (num != 0)
-        {
-            __result = num;
-            return false;
-        }
-        
         if (x.Template is AmmoTemplate ammoX && y.Template is AmmoTemplate ammoY)
         {
             num = string.Compare(ammoX.Caliber, ammoY.Caliber, StringComparison.OrdinalIgnoreCase);
@@ -50,6 +44,15 @@ public class SortComparatorPatch : ModulePatch
                 __result = num;
                 return false;
             }
+        }
+        
+        int rarityX = GetRarityOrder(x);
+        int rarityY = GetRarityOrder(y);
+        num = rarityX.CompareTo(rarityY);
+        if (num != 0)
+        {
+            __result = num;
+            return false;
         }
         
         string nameX = x.ShortName.Localized();
@@ -101,20 +104,14 @@ public class SortComparatorPatch : ModulePatch
 
     private static int GetRarityOrder(Item item)
     {
-        try
+        if (RarityOrder.TryGetValue(item.BackgroundColor.ToString(), out int order))
         {
-            if (RarityOrder.TryGetValue(item.BackgroundColor.ToString(), out int order))
-            {
-                return order;
-            }
-        }
-        catch
-        {
-            // ignore
+            return order;
         }
         
         return 10;
     }
+
 
     private static float GetResourcePercent(Item item)
     {
