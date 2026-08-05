@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+using BarterItemsStacks.Web.Config;
 using BarterItemsStacks.Web.Models;
 using BarterItemsStacks.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -32,15 +33,19 @@ public partial class Main : ComponentBase, IDisposable
     private readonly Debouncer _toastClearDebouncer = new();
     private readonly Debouncer _highlightClearDebouncer = new();
 
-    private readonly Dictionary<string, string> _imgResById = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, string> _imgDataUriCache = new(StringComparer.Ordinal);
-    private string _unknownImgDataUri = "";
-    
+    private readonly ItemImages _images = new();
+
     private ItemsDbIndex? _itemsIndex;
+    private CategoryResolver? _resolver;
     private ItemsConfig? _cfg;
     private string? _pathToMod;
 
     private bool _isSaving;
+    private bool _showCategoryEditor;
+    private readonly List<PresetEntry> _presets = new();
+    private string _selectedPreset = "";
+    private bool _presetsOpen;
+    private string? _presetConfirmName;
     
     private readonly HashSet<string> _collapsedCategories = new(StringComparer.Ordinal);
     
@@ -59,34 +64,10 @@ public partial class Main : ComponentBase, IDisposable
     private string? _toastMessage;
     private bool _toastVisible;
 	
-	private static readonly Lazy<string> _embeddedStyles = new(BuildEmbeddedStyles);
-    private static readonly Lazy<string> _embeddedScripts = new(BuildEmbeddedScripts);
-    private static string EmbeddedStyles => _embeddedStyles.Value;
-    private static string EmbeddedScripts => _embeddedScripts.Value;
+    private static string EmbeddedStyles => WebAssets.Styles;
+    private static string EmbeddedScripts => WebAssets.Scripts;
     
-    private string ItemImageSrc(string tplId)
-    {
-        if (string.IsNullOrWhiteSpace(tplId))
-        {
-            return _unknownImgDataUri;
-        }
-
-        if (_imgDataUriCache.TryGetValue(tplId, out var cached))
-        {
-            return cached;
-        }
-
-        if (!_imgResById.TryGetValue(tplId, out var resName))
-        {
-            return _unknownImgDataUri;
-        }
-        
-        var uri = ToWebpDataUri(ReadEmbeddedBytes(Assembly.GetExecutingAssembly(), resName));
-        
-        _imgDataUriCache[tplId] = uri;
-        
-        return uri;
-    }
+    private string ItemImageSrc(string tplId) => _images.Src(tplId);
     
     private static readonly FieldInfo? RuleStackField =
         typeof(ItemsConfig.ItemRule).GetField("StackSize", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -112,14 +93,19 @@ public partial class Main : ComponentBase, IDisposable
         {
             _pathToMod = _modHelper.GetAbsolutePathToModFolder(typeof(ItemsConfig).Assembly);
             _cfg = _modHelper.GetJsonDataFromFile<ItemsConfig>(_pathToMod, ItemsConfig.FileName);
+            ScanPresets();
             
             var localeKey = _localeService.GetDesiredGameLocale();
             var localeLocalized = _localeService.GetLocaleDb();
             var localeEn = _localeService.GetLocaleDb("en");
 
-            _itemsIndex = new ItemsDbIndex(_templateTable, OtherCategoryName, localeLocalized, localeEn);
+            CategoriesConfig.EnsureExists(_pathToMod);
+            var categoriesCfg = _modHelper.GetJsonDataFromFile<CategoriesConfig>(_pathToMod, CategoriesConfig.FileName);
+            _resolver = CategoryResolver.Build(categoriesCfg.Categories);
 
-            BuildEmbeddedImageIndex();
+            _itemsIndex = new ItemsDbIndex(_templateTable, OtherCategoryName, localeLocalized, localeEn, _resolver);
+
+            _images.BuildIndex();
 
             var itemsDb = _templateTable.Items;
             foreach (var kvp in itemsDb)
@@ -128,53 +114,7 @@ public partial class Main : ComponentBase, IDisposable
                     _knownParentTplIds.Add(kvp.Key.ToString());
             }
 
-            _configItemsById.Clear();
-            _inConfig.Clear();
-            _parentOverrideIds.Clear();
-
-            foreach (var kvp in _cfg.Items)
-            {
-                var tplId = kvp.Key;
-                var rule = kvp.Value;
-
-                if (_itemsIndex.TryGet(tplId, out var db))
-                {
-                    _configItemsById[tplId] = new ConfigItemRow(
-                        tplId,
-                        db.Name,
-                        db.Parent,
-                        db.Category,
-                        rule.Stack,
-                        rule.Resource,
-                        rule.Height,
-                        rule.Width,
-                        rule.Weight,
-                        rule.Price
-                    );
-                }
-                else
-                {
-                    _configItemsById[tplId] = new ConfigItemRow(
-                        tplId,
-                        "unknown",
-                        "unknown",
-                        OtherCategoryName,
-                        rule.Stack,
-                        rule.Resource,
-                        rule.Height,
-                        rule.Width,
-                        rule.Weight,
-                        rule.Price
-                    );
-                }
-
-                _inConfig.Add(tplId);
-                
-                if (_knownParentTplIds.Contains(tplId))
-                    _parentOverrideIds.Add(tplId);
-            }
-
-            RebuildView();
+            LoadItemsFromConfig(_cfg);
         }
         catch (Exception ex)
         {
@@ -242,13 +182,201 @@ public partial class Main : ComponentBase, IDisposable
         
         var itemsOnly = GetNonParentItems();
         
-        _viewCategories = ViewBuilder.Build(itemsOnly, OtherCategoryName);
+        _viewCategories = ViewBuilder.Build(itemsOnly, OtherCategoryName, _resolver!);
     }
     
     private IEnumerable<ConfigItemRow> GetNonParentItems()
     {
         return _configItemsById.Values.Where(x => !_parentOverrideIds.Contains(x.TemplateId));
     }
+
+    private async Task OpenCategoryEditor()
+    {
+        _showCategoryEditor = true;
+        await _js.InvokeVoidAsync("eval", "document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';");
+    }
+
+    private async Task CloseCategoryEditor()
+    {
+        _showCategoryEditor = false;
+        await _js.InvokeVoidAsync("eval", "document.documentElement.style.overflow='';document.body.style.overflow='';");
+    }
+
+    private void RefreshCategories()
+    {
+        if (_pathToMod is null)
+        {
+            return;
+        }
+
+        try
+        {
+            CategoriesConfig.EnsureExists(_pathToMod);
+            var cfg = _modHelper.GetJsonDataFromFile<CategoriesConfig>(_pathToMod, CategoriesConfig.FileName);
+            var resolver = CategoryResolver.Build(cfg.Categories);
+            _resolver = resolver;
+
+            var localeLocalized = _localeService.GetLocaleDb();
+            var localeEn = _localeService.GetLocaleDb("en");
+            _itemsIndex = new ItemsDbIndex(_templateTable, OtherCategoryName, localeLocalized, localeEn, resolver);
+
+            foreach (var row in _configItemsById.Values)
+            {
+                row.Category = resolver.Resolve(row.TemplateId, row.Parent, OtherCategoryName);
+            }
+
+            _searchRefreshToken++;
+            RebuildView();
+        }
+        catch
+        {
+        }
+    }
+
+    private void LoadItemsFromConfig(ItemsConfig cfg)
+    {
+        _configItemsById.Clear();
+        _inConfig.Clear();
+        _parentOverrideIds.Clear();
+        _parentOverrides.Clear();
+        _categoryBulk.Clear();
+
+        foreach (var kvp in cfg.Items)
+        {
+            var tplId = kvp.Key;
+            var rule = kvp.Value;
+
+            if (_itemsIndex != null && _itemsIndex.TryGet(tplId, out var db))
+            {
+                _configItemsById[tplId] = new ConfigItemRow(
+                    tplId,
+                    db.Name,
+                    db.Parent,
+                    db.Category,
+                    rule.Stack,
+                    rule.Resource,
+                    rule.Height,
+                    rule.Width,
+                    rule.Weight,
+                    rule.Price
+                );
+            }
+            else
+            {
+                _configItemsById[tplId] = new ConfigItemRow(
+                    tplId,
+                    "unknown",
+                    "unknown",
+                    OtherCategoryName,
+                    rule.Stack,
+                    rule.Resource,
+                    rule.Height,
+                    rule.Width,
+                    rule.Weight,
+                    rule.Price
+                );
+            }
+
+            _inConfig.Add(tplId);
+
+            if (_knownParentTplIds.Contains(tplId))
+            {
+                _parentOverrideIds.Add(tplId);
+            }
+        }
+
+        _searchRefreshToken++;
+        RebuildView();
+    }
+
+    private void ScanPresets()
+    {
+        _presets.Clear();
+
+        if (_pathToMod is null)
+        {
+            return;
+        }
+
+        var dir = Path.Combine(_pathToMod, "presets");
+        if (!Directory.Exists(dir))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(dir))
+        {
+            var ext = Path.GetExtension(file);
+            if (!ext.Equals(".json", StringComparison.OrdinalIgnoreCase) &&
+                !ext.Equals(".jsonc", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            _presets.Add(new PresetEntry(Path.GetFileNameWithoutExtension(file), Path.GetFileName(file)));
+        }
+    }
+
+    private void ApplyPreset(string presetName)
+    {
+        if (_pathToMod is null || _itemsIndex is null)
+        {
+            return;
+        }
+
+        var entry = _presets.FirstOrDefault(p => string.Equals(p.Name, presetName, StringComparison.Ordinal));
+        if (entry is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var preset = _modHelper.GetJsonDataFromFile<ItemsConfig>(Path.Combine(_pathToMod, "presets"), entry.File);
+            _cfg = preset;
+            LoadItemsFromConfig(_cfg);
+        }
+        catch (Exception ex)
+        {
+            ShowToast("Preset load failed: " + ex.Message, ToastErrorDurationMs);
+        }
+    }
+
+    private void TogglePresets()
+    {
+        _presetsOpen = !_presetsOpen;
+    }
+
+    private void ClosePresets()
+    {
+        _presetsOpen = false;
+    }
+
+    private void SelectPreset(string name)
+    {
+        _presetsOpen = false;
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            _presetConfirmName = name;
+        }
+    }
+
+    private void ConfirmApplyPreset()
+    {
+        var name = _presetConfirmName;
+        _presetConfirmName = null;
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            ApplyPreset(name);
+        }
+    }
+
+    private void CancelApplyPreset()
+    {
+        _presetConfirmName = null;
+    }
+
+    private sealed record PresetEntry(string Name, string File);
 
     // --- bulk ---
     private readonly Dictionary<string, CategoryBulk> _categoryBulk = new(StringComparer.Ordinal);
@@ -655,108 +783,5 @@ public partial class Main : ComponentBase, IDisposable
         await _js.InvokeVoidAsync("eval", "window.scrollTo({top:0,behavior:\"smooth\"});");
     }
 
-    // ---- assets helpers ----
-    private static string BuildEmbeddedScripts()
-    {
-        var asm = Assembly.GetExecutingAssembly();
-        var names = asm.GetManifestResourceNames();
-
-        var jsRes = names.FirstOrDefault(n =>
-            n.EndsWith("inputFilters.js", StringComparison.OrdinalIgnoreCase));
-
-        if (jsRes is null)
-            throw new InvalidOperationException("Embedded resource 'inputFilters.js' not found. Check that it is under Web\\Assets and marked as EmbeddedResource.");
-
-        return ReadText(asm, jsRes);
-    }
-    
-    private static string BuildEmbeddedStyles()
-    {
-        var asm = Assembly.GetExecutingAssembly();
-        var names = asm.GetManifestResourceNames();
-        
-        var cssRes = names.FirstOrDefault(n =>
-            n.EndsWith("bis.css", StringComparison.OrdinalIgnoreCase));
-
-        var fontRes = names.FirstOrDefault(n =>
-            n.EndsWith("bender.otf", StringComparison.OrdinalIgnoreCase));
-
-        if (cssRes is null)
-            throw new InvalidOperationException("Embedded resource 'bis.css' not found. Check that it is under Web\\Assets and marked as EmbeddedResource.");
-
-        if (fontRes is null)
-            throw new InvalidOperationException("Embedded resource 'bender.otf' not found. Check that it is under Web\\Assets and marked as EmbeddedResource.");
-
-        var css = ReadText(asm, cssRes);
-        var fontBytes = ReadEmbeddedBytes(asm, fontRes);
-        var b64 = Convert.ToBase64String(fontBytes);
-
-        var fontFace =
-            $@"
-            @font-face {{
-              font-family: 'Bender';
-              src: url('data:font/otf;base64,{b64}') format('opentype');
-              font-weight: 400;
-              font-style: normal;
-              font-display: swap;
-            }}
-            ";
-        
-        return fontFace + "\n" + css;
-    }
-
-    private static string ReadText(Assembly asm, string resourceName)
-    {
-        using var s = asm.GetManifestResourceStream(resourceName)
-                  ?? throw new InvalidOperationException($"Embedded resource stream not found: {resourceName}");
-        using var r = new StreamReader(s);
-        return r.ReadToEnd();
-    }
-    
-    private static byte[] ReadEmbeddedBytes(Assembly asm, string resourceName)
-    {
-        using var s = asm.GetManifestResourceStream(resourceName)
-                      ?? throw new InvalidOperationException($"Embedded image resource not found: {resourceName}");
-
-        using var ms = new MemoryStream();
-        s.CopyTo(ms);
-        return ms.ToArray();
-    }
-    
-    private void BuildEmbeddedImageIndex()
-    {
-        _imgResById.Clear();
-        _imgDataUriCache.Clear();
-
-        var asm = Assembly.GetExecutingAssembly();
-        var names = asm.GetManifestResourceNames();
-
-        foreach (var res in names)
-        {
-            if (!res.EndsWith(".webp", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (res.IndexOf(".items.", StringComparison.OrdinalIgnoreCase) < 0)
-                continue;
-            
-            var parts = res.Split('.');
-            if (parts.Length < 2)
-                continue;
-
-            var id = parts[^2];
-            if (!string.IsNullOrWhiteSpace(id))
-                _imgResById[id] = res;
-        }
-        
-        if (_imgResById.TryGetValue("unknown", out var unkRes))
-        {
-            _unknownImgDataUri = ToWebpDataUri(ReadEmbeddedBytes(asm, unkRes));
-        }
-        else
-        {
-            _unknownImgDataUri = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-        }
-    }
-    
-    private static string ToWebpDataUri(byte[] bytes) => "data:image/webp;base64," + Convert.ToBase64String(bytes);
 }
+

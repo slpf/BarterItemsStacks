@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace BarterItemsStacksClient.Patches.Hideout
 {
-    internal class HideoutMethod21Patch : ModulePatch
+    internal class GetItemReferencesPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {

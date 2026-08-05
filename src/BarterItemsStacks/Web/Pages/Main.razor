@@ -8,7 +8,7 @@
 
 <PageTitle>Barter Items Stacks - Config Editor</PageTitle>
 
-<div>
+<div style="padding-bottom:16px">
     @if (!string.IsNullOrEmpty(_error))
     {
         <h1>Barter Items Stacks</h1>
@@ -25,7 +25,42 @@
     {
         <div class="header">
             <h1>Barter Items Stacks</h1>
-            <button class="saveButton" type="button" @onclick="SaveAsync" disabled="@_isSaving">SAVE CONFIG</button>
+            <div class="header-actions">
+                <div class="preset-dropdown @(_presetsOpen ? "open" : "")">
+                    <button type="button" class="preset-trigger" title="Apply preset" @onclick="TogglePresets">
+                        <span class="preset-label">@(string.IsNullOrWhiteSpace(_selectedPreset) ? "- Presets -" : _selectedPreset)</span>
+                        <span class="preset-arrow">
+                            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
+                    </button>
+                    @if (_presetsOpen)
+                    {
+                        <div class="preset-backdrop" @onclick="ClosePresets"></div>
+                        <div class="preset-menu">
+                            @foreach (var p in _presets)
+                            {
+                                var name = p.Name;
+                                <div class="preset-option @(name == _selectedPreset ? "preset-option--active" : "")" @onclick="() => SelectPreset(name)">@name</div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <button class="btn-soft icon-btn" type="button" title="Categories" @onclick="OpenCategoryEditor">
+                    <svg viewBox="0 0 24 24">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </button>
+                <button class="saveButton icon-btn" type="button" title="Save config" @onclick="SaveAsync" disabled="@_isSaving">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8 15 3"></polyline>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <Search SearchFunc="SearchItemsAsync"
@@ -112,9 +147,14 @@
                         </div>
                     </div>
 
-                    <button type="button" title="Remove all lines from category"
+                    <button class="icon-btn" type="button" title="Remove all lines from category"
                             @onclick="() => RemoveCategoryItems(c.Name)"
-                            @onclick:stopPropagation="true">REMOVE</button>
+                            @onclick:stopPropagation="true">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
                 </summary>
 
                 <div>
@@ -134,4 +174,21 @@
     }
 
     <button type="button" class="scrollTop" title="Scroll to top" @onclick="ScrollToTopAsync">▲</button>
+
+    @if (_showCategoryEditor)
+    {
+        <CategoriesEditor OnChanged="RefreshCategories" OnClose="CloseCategoryEditor" />
+    }
+
+    @if (_presetConfirmName is not null)
+    {
+        <div class="confirm-backdrop" @onclick="CancelApplyPreset"></div>
+        <div class="confirm-box">
+            <p>Apply preset "@_presetConfirmName"? This will replace the current items in the configurator.</p>
+            <div class="confirm-actions">
+                <button class="btn-apply" type="button" @onclick="ConfirmApplyPreset">Apply</button>
+                <button class="btn-cancel" type="button" @onclick="CancelApplyPreset">Cancel</button>
+            </div>
+        </div>
+    }
 </div>

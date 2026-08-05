@@ -17,7 +17,7 @@ public static class ParentNames
                 { "57864c8c245977548867e7f1", "Medical supplies"},
                 { "5448e8d04bdc2ddf718b4569", "Food"},
                 { "5448e8d64bdc2dce718b4568", "Drinks"},
-                // { "543be5cb4bdc2deb348b4568", "Ammo containers"}, // doesn't work correctly 
+                { "543be5cb4bdc2deb348b4568", "Ammo containers"}, // doesn't work correctly 
                 { "567849dd4bdc2d150f8b456e", "Maps"},
                 { "5448f3a64bdc2d60728b456a", "Injectors"},
                 { "5448f3ac4bdc2dce718b4569", "Injury treatment"},

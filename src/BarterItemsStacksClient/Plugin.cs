@@ -35,8 +35,8 @@ namespace BarterItemsStacksClient
             new UpdateItemViewPatch().Enable();
             new MergePatch().Enable();
             new TransferMaxPatch().Enable();
-            new HideoutMethod23Patch().Enable();
-            new HideoutMethod21Patch().Enable();
+            new RemoveSpentItemsPatch().Enable();
+            new GetItemReferencesPatch().Enable();
             new CircleCheckCompatibilityPatch().Enable();
             new CanApplyItemPatch().Enable();
             new RepairKitStackUsePatch().Enable();

@@ -1,0 +1,147 @@
+<div class="cat-backdrop" @onclick="Close"></div>
+<div class="cat-overlay">
+    <div class="cat-overlayHeader">
+        @if (_mode == EditorMode.List)
+        {
+            <h1>Categories</h1>
+            <div class="cat-spacer"></div>
+
+            <button class="btn-soft icon-btn" type="button" title="Add category" @onclick="AddRow">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+
+            <button class="saveButton icon-btn" type="button" title="Save" @onclick="SaveCategoriesAsync" disabled="@_isSaving">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8 15 3"></polyline>
+                </svg>
+            </button>
+        }
+        else
+        {
+            <h1>@(string.IsNullOrWhiteSpace(_editingRow?.Name) ? "Edit IDs" : _editingRow!.Name)</h1>
+            <div class="cat-spacer"></div>
+
+            <button class="btn-soft icon-btn" type="button" title="Back to categories" @onclick="BackToCategories">
+                <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </button>
+
+            <button class="saveButton icon-btn" type="button" title="Save" @onclick="SaveCategoriesAsync" disabled="@_isSaving">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8 15 3"></polyline>
+                </svg>
+            </button>
+        }
+
+        <button class="icon-btn" type="button" title="Close" @onclick="Close">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+
+    <div class="cat-overlayBody">
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div style="padding: 12px; border: 1px solid #cc0000; border-radius: 6px; margin-bottom: 12px;">
+                <b>Error:</b> @_error
+            </div>
+        }
+
+        @if (_mode == EditorMode.List)
+        {
+            @for (var index = 0; index < _rows.Count; index++)
+            {
+                var row = _rows[index];
+                var i = index;
+                <div class="cat-card @(_dragIndex == i ? "cat-dragging" : "")"
+                     draggable="true"
+                     @ondragstart="() => OnDragStart(i)"
+                     @ondragend="OnDragEnd"
+                     @ondragenter="() => OnDragEnter(i)"
+                     @ondragover:preventDefault="true"
+                     @ondrop="OnDrop"
+                     @ondrop:preventDefault="true">
+
+                    <input class="cat-name" type="text" value="@row.Name"
+                           @oninput="e => OnNameInput(row, e)"
+                           placeholder="Category name" />
+
+                    <span class="cat-count o7">parents: @CountIds(row.ParentIdsText), items: @CountIds(row.TemplateIdsText)</span>
+
+                    <div class="cat-spacer"></div>
+
+                    <div class="cat-actions">
+                        <button class="btn-soft icon-btn" type="button" title="Edit IDs" @onclick="() => EditIds(row)">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </button>
+                        <button class="icon-btn" type="button" title="Delete" @onclick="() => AskDeleteCategory(row)">
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                        <span class="cat-grip" title="Drag to reorder">
+                            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        </span>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <Search SearchFunc="SearchIdsAsync"
+                    OnSelect="AddId"
+                    ItemImageSrc="IdImageSrc"
+                    RefreshToken="_idSearchToken"
+                    Placeholder="Add by id or name..." />
+
+            @if (_idRows.Count == 0)
+            {
+                <p class="o7" style="margin-top: 16px;">No IDs yet. Search above to add parent or item IDs.</p>
+            }
+
+            @foreach (var idRow in _idRows)
+            {
+                <div class="cat-card">
+                    <div class="id-thumb">
+                        <img src="@IdImageSrc(idRow.Id)" alt="@idRow.Id" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(idRow.Name))
+                    {
+                        <span class="id-name">@idRow.Name</span>
+                    }
+                    <div class="cat-spacer"></div>
+                    <span class="id-tpl mono o7">@idRow.Id - @(idRow.IsParent ? "Parent" : "Item")</span>
+                    <button class="icon-btn" type="button" title="Remove" @onclick="() => AskRemoveId(idRow)">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(_toastMessage))
+{
+    <div class="toast @(_toastVisible ? "toast--show" : "")">@_toastMessage</div>
+}
+
+@if (_confirmMessage is not null)
+{
+    <div class="confirm-backdrop" @onclick="ConfirmNo"></div>
+    <div class="confirm-box">
+        <p>@_confirmMessage</p>
+        <div class="confirm-actions">
+            <button class="btn-danger" type="button" @onclick="ConfirmYes">@_confirmYesText</button>
+            <button type="button" @onclick="ConfirmNo">Cancel</button>
+        </div>
+    </div>
+}
