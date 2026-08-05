@@ -11,7 +11,7 @@ using Fika.Core.Networking;
 
 namespace BarterItemsStacksFika;
 
-[BepInPlugin("com.slpf.barteritemsstacks.fika", "BarterItemsStacksFika", "1.0.0")]
+[BepInPlugin("com.slpf.barteritemsstacks.fika", "BarterItemsStacksFika", "1.4.0")]
 [BepInDependency("com.fika.core", BepInDependency.DependencyFlags.HardDependency)]
 [BepInDependency("com.slpf.barteritemsstacks", BepInDependency.DependencyFlags.HardDependency)]
 public class BarterItemsStacksFikaPlugin : BaseUnityPlugin

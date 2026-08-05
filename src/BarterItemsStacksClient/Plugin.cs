@@ -48,6 +48,7 @@ namespace BarterItemsStacksClient
             new ContainerStackPatch().Enable();
             new TopUpStackPatch().Enable();
             new NestedQuickMoveStackOrderPatch().Enable();
+            new SpecialSlotStackPatch().Enable();
             
             if (HarmonyLib.AccessTools.TypeByName("MergeConsumables.Patches.ExecutePossibleAction_Patch") != null)
             {
