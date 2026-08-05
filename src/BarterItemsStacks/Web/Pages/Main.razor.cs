@@ -5,8 +5,10 @@ using BarterItemsStacks.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SPTarkov.Server.Core.Helpers;
-using SPTarkov.Server.Core.Servers;
+using SPTarkov.Server.Core.Helpers.Server;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Services.Locales;
 
 namespace BarterItemsStacks.Web.Pages;
 
@@ -19,7 +21,7 @@ public partial class Main : ComponentBase, IDisposable
     private const int ToastErrorDurationMs = 4000;
 
     [Inject] private ModHelper _modHelper { get; set; } = default!;
-    [Inject] private DatabaseServer _databaseServer { get; set; } = default!;
+    [Inject] private TemplateTable _templateTable { get; set; } = default!;
     [Inject] private IJSRuntime _js { get; set; } = default!;
     [Inject] private LocaleService _localeService { get; set; } = default!;
     
@@ -115,11 +117,11 @@ public partial class Main : ComponentBase, IDisposable
             var localeLocalized = _localeService.GetLocaleDb();
             var localeEn = _localeService.GetLocaleDb("en");
 
-            _itemsIndex = new ItemsDbIndex(_databaseServer, OtherCategoryName, localeLocalized, localeEn);
-            
+            _itemsIndex = new ItemsDbIndex(_templateTable, OtherCategoryName, localeLocalized, localeEn);
+
             BuildEmbeddedImageIndex();
-            
-            var itemsDb = _databaseServer.GetTables().Templates.Items;
+
+            var itemsDb = _templateTable.Items;
             foreach (var kvp in itemsDb)
             {
                 if (string.Equals(kvp.Value.Type, "Node", StringComparison.OrdinalIgnoreCase))

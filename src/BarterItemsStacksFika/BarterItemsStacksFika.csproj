@@ -1,22 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard21</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>embedded</DebugType>
-    <Optimize>false</Optimize>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <DebugType>embedded</DebugType>
-    <Optimize>true</Optimize>
-    <DefineConstants>TRACE</DefineConstants>
+    <AssemblyName>BarterItemsStacksFika</AssemblyName>
+    <RootNamespace>BarterItemsStacksFika</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -25,7 +14,6 @@
     <AssemblySearchPaths>
       $(SPTRefDir)/core;
       $(SPTRefDir)/plugins/spt;
-      $(SPTRefDir)/plugins/spt/ConfigurationManager;
       $(SPTRefDir)/managed;
       $(AssemblySearchPaths);
     </AssemblySearchPaths>
@@ -36,7 +24,6 @@
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <GenerateAssemblyAssemblyCopyrightAttribute>false</GenerateAssemblyAssemblyCopyrightAttribute>
     <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
   </PropertyGroup>
 
@@ -46,38 +33,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ConfigurationManager" />
-    <Reference Include="spt-common" />
-    <Reference Include="spt-core" />
-    <Reference Include="spt-custom" />
-    <Reference Include="spt-debugging" />
     <Reference Include="spt-reflection" />
-    <Reference Include="spt-singleplayer" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json" />
     <Reference Include="Assembly-CSharp" />
     <Reference Include="Comfort" />
-    <Reference Include="Comfort.Unity" />
-    <Reference Include="ItemComponent.Types" />
-    <Reference Include="Unity.TextMeshPro" />
     <Reference Include="UnityEngine.CoreModule" />
     <Reference Include="UnityEngine" />
-    <Reference Include="UnityEngine.UI" />
-    <Reference Include="Sirenix.Serialization" />
-    <Reference Include="DissonanceVoip" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Prevent copying of references to output -->
-    <Reference Update="@(Reference)">
-      <Private>false</Private>
+    <Reference Include="Fika.Core">
+      <HintPath>$(SPTRefDir)/Fika.Core.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\ModInfo.cs" />
+    <Reference Update="@(Reference)">
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <Target Name="CopyToBuildFolder" AfterTargets="Build">
@@ -87,4 +59,5 @@
     <MakeDir Directories="$(DestDir)" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DestDir)" SkipUnchangedFiles="true" />
   </Target>
+
 </Project>

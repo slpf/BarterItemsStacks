@@ -2,6 +2,7 @@
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Reflection;
+using Diz.LanguageExtensions;
 
 namespace BarterItemsStacksClient.Patches.Interactions
 {
@@ -9,15 +10,15 @@ namespace BarterItemsStacksClient.Patches.Interactions
     {
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(InteractionsHandlerClass), nameof(InteractionsHandlerClass.TransferMax));
+            return AccessTools.Method(typeof(ItemManipulator), nameof(ItemManipulator.TransferMax));
         }
 
         [PatchPrefix]
-        public static bool Prefix(InteractionsHandlerClass __instance, Item item, Item targetItem, int count, TraderControllerClass itemController, bool simulate, ref GStruct154<GClass3425> __result)
+        public static bool Prefix(Item item, Item targetItem, int count, ItemController itemController, bool simulate, ref OperationResult<TransferResult> __result)
         {
             if (!Utils.CanMergeResources(item, targetItem))
             {
-                __result = new GClass1522("Cannot transfer items with different resource values");
+                __result = new StringError("Cannot transfer items with different resource values");
                 return false;
             }
 
@@ -31,7 +32,7 @@ namespace BarterItemsStacksClient.Patches.Interactions
                 return true;
             }
 
-            __result = new GClass1522("Cannot transfer FIR and non-FIR items");
+            __result = new StringError("Cannot transfer FIR and non-FIR items");
             return false;
         }
     }

@@ -1,6 +1,6 @@
 ﻿using BarterItemsStacks.Web.Models;
 using BarterItemsStacks.Web.Config;
-using SPTarkov.Server.Core.Servers;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 
 namespace BarterItemsStacks.Web.Services;
 
@@ -10,12 +10,12 @@ public sealed class ItemsDbIndex
     private readonly Dictionary<string, ItemSearchEntry> _byId;
 
     public ItemsDbIndex(
-        DatabaseServer databaseServer,
+        TemplateTable templateTable,
         string otherCategoryName,
         IReadOnlyDictionary<string, string> localeLocalized,
         IReadOnlyDictionary<string, string> localeEn)
     {
-        var itemsDb = databaseServer.GetTables().Templates.Items;
+        var itemsDb = templateTable.Items;
 
         _index = new List<ItemSearchEntry>(itemsDb.Count);
 

@@ -1,32 +1,16 @@
-﻿using SPTarkov.DI.Annotations;
+using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
-using SPTarkov.Server.Core.Models.Common;
-using SPTarkov.Server.Core.Models.Eft.Common;
-using SPTarkov.Server.Core.Models.Eft.Common.Request;
-using SPTarkov.Server.Core.Models.Eft.ItemEvent;
+using SPTarkov.Server.Core.DI.Routing;
 
 namespace BarterItemsStacks.RemoveOneFromStack
 {
-    [Injectable]
-    public class RemoveOneFromStackRouter(RemoveOneFromStackCallbacks callbacks) : ItemEventRouterDefinition
-    {
-        public override async ValueTask<ItemEventRouterResponse> HandleItemEvent(string url, PmcData pmcData, BaseInteractionRequestData body, MongoId sessionID, ItemEventRouterResponse output)
-        {
-            return url switch
-            {
-                BarterItemsStacks.RofsRouter => await callbacks.HandleRemoveOneFromStack(pmcData, body as RemoveOneFromStackModel, sessionID),
-                _ => throw new Exception($"RemoveOneFromStackRouter being used when it cant handle route {url}")
-            };
-        }
-
-        protected override List<HandledRoute> GetHandledRoutes()
-        {
-            return [new(BarterItemsStacks.RofsRouter, false)];
-        }
-
-        protected override ValueTask<ItemEventRouterResponse> HandleItemEventInternal(string url, PmcData pmcData, BaseInteractionRequestData body, MongoId sessionID, ItemEventRouterResponse output)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    [Injectable(TypePriority = OnLoadOrder.Routers + 1)]
+    public sealed class RemoveOneFromStackRouter(RemoveOneFromStackCallbacks callbacks)
+        : ItemEventRouter([
+            new ItemRouteAction<RemoveOneFromStackModel>(
+                BarterItemsStacks.RofsRouter,
+                (url, pmcData, body, sessionID, output, cancellationToken) =>
+                    callbacks.HandleRemoveOneFromStack(pmcData, body, sessionID, cancellationToken)
+            )
+        ]) { }
 }

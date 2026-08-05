@@ -4,13 +4,14 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using BepInEx.Logging;
+using Diz.LanguageExtensions;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 
 namespace BarterItemsStacksClient.Patches.Compatibility;
 
-public class StashManagementHelperMergePatch : ModulePatch
+public class StashManagementHelperPatch : ModulePatch
 {
     public static ManualLogSource Logger { get; set; }
     
@@ -33,7 +34,7 @@ public class StashManagementHelperMergePatch : ModulePatch
 
         try
         {
-            foreach (var grid in items.Grids)
+            foreach (Grid grid in items.Grids)
             {
                 var stackableGroups = grid.Items
                     .Where(i => i.Owner != null && i.StackObjectsCount < i.StackMaxSize && Utils.IsFullResource(i))
@@ -43,32 +44,31 @@ public class StashManagementHelperMergePatch : ModulePatch
 
                 foreach (var group in stackableGroups)
                 {
-                    var failedMergePairs = new HashSet<(string, string)>();
+                    HashSet<(string, string)> failedMergePairs = new HashSet<(string, string)>();
                     bool mergesMade;
 
                     do
                     {
-                        mergesMade = false;
-
-                        var stacks = group
+                        List<Item> stacks = group
                             .Where(i => i.StackObjectsCount > 0)
                             .OrderByDescending(i => i.StackObjectsCount)
                             .ToList();
 
                         if (stacks.Count <= 1) break;
 
-                        var targetStack = stacks.FirstOrDefault(s => s.StackObjectsCount < s.StackMaxSize);
+                        Item targetStack = stacks.FirstOrDefault(s => s.StackObjectsCount < s.StackMaxSize);
+                        
                         if (targetStack == null) break;
                         
                         Item sourceStack = null;
                         
                         for (int i = stacks.Count - 1; i >= 0; i--)
                         {
-                            var candidate = stacks[i];
+                            Item candidate = stacks[i];
                             if (candidate == targetStack) continue;
 
-                            var pairKey = (candidate.Id, targetStack.Id);
-                            var pairKeyReverse = (targetStack.Id, candidate.Id);
+                            (string, string) pairKey = (candidate.Id, targetStack.Id);
+                            (string, string) pairKeyReverse = (targetStack.Id, candidate.Id);
 
                             if (!failedMergePairs.Contains(pairKey) && !failedMergePairs.Contains(pairKeyReverse))
                             {
@@ -79,7 +79,7 @@ public class StashManagementHelperMergePatch : ModulePatch
 
                         if (sourceStack == null) break;
 
-                        var mergeResult = InteractionsHandlerClass.TransferOrMerge(sourceStack, targetStack, inventoryController, simulate);
+                        OperationResult<ITransferOrMergeResult> mergeResult = ItemManipulator.TransferOrMerge(sourceStack, targetStack, inventoryController, simulate);
                         
                         if (mergeResult.Succeeded)
                         {

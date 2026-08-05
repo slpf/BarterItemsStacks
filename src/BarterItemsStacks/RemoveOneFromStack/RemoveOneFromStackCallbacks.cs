@@ -7,9 +7,9 @@ namespace BarterItemsStacks.RemoveOneFromStack
     [Injectable]
     public class RemoveOneFromStackCallbacks(RemoveOneFromStackController controller)
     {
-        public async ValueTask<ItemEventRouterResponse> HandleRemoveOneFromStack(PmcData pmcData, RemoveOneFromStackModel body, string sessionID)
+        public async ValueTask<ItemEventRouterResponse> HandleRemoveOneFromStack(PmcData pmcData, RemoveOneFromStackModel body, string sessionID, CancellationToken cancellationToken)
         {
-            return await controller.RemoveOneFromStack(pmcData, body, sessionID);
+            return await controller.RemoveOneFromStack(pmcData, body, sessionID, cancellationToken);
         }
     }
 }

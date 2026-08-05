@@ -3,6 +3,7 @@ using EFT.InventoryLogic;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System.Reflection;
+using EFT.HealthSystem;
 
 namespace BarterItemsStacksClient.Patches.Interactions
 {
@@ -10,16 +11,16 @@ namespace BarterItemsStacksClient.Patches.Interactions
     {
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(GClass3009<HealthControllerClass.GClass3015>), nameof(GClass3009<HealthControllerClass.GClass3015>.HasPartsToApply));
+            return AccessTools.Method(typeof(BaseHealthController<OfflineHealthController.Effect>), nameof(BaseHealthController<>.HasPartsToApply));
         }
 
         [PatchPrefix]
-        public static bool Prefix(GClass3009<HealthControllerClass.GClass3015> __instance, Item item, ref IResult __result)
+        public static bool Prefix(BaseHealthController<OfflineHealthController.Effect> __instance, Item item, ref IResult __result)
         {
             if (item.StackObjectsCount > 1)
             {
-                var fComp = item.GetItemComponent<FoodDrinkComponent>();
-                var mComp = item.GetItemComponent<MedKitComponent>();
+                FoodDrinkComponent fComp = item.GetItemComponent<FoodDrinkComponent>();
+                MedKitComponent mComp = item.GetItemComponent<MedKitComponent>();
 
                 if ((mComp == null && fComp == null) || (fComp != null && fComp.MaxResource == 1))
                 {

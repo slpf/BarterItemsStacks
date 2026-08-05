@@ -1,4 +1,5 @@
 <Solution>
 	<Project Path="src/BarterItemsStacksClient/BarterItemsStacksClient.csproj"/>
 	<Project Path="src/BarterItemsStacks/BarterItemsStacks.csproj" />
+	<Project Path="src/BarterItemsStacksFika/BarterItemsStacksFika.csproj" />
 </Solution>

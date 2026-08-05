@@ -1,10 +1,11 @@
-﻿using EFT.InventoryLogic;
+using Diz.LanguageExtensions;
+using EFT.InventoryLogic;
 using HarmonyLib;
 using SPT.Reflection.Patching;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using EFT.Hideout;
 using UnityEngine;
 
 namespace BarterItemsStacksClient.Patches.Hideout
@@ -13,59 +14,65 @@ namespace BarterItemsStacksClient.Patches.Hideout
     {
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(HideoutClass), nameof(HideoutClass.method_23));
+            return AccessTools.Method(typeof(HideoutRepresentation), nameof(HideoutRepresentation.RemoveSpentItems));
         }
 
         [PatchPrefix]
-        public static bool Prefix(HideoutClass __instance, IEnumerable<GClass1433> items, ref IEnumerable<GInterface424> __result)
+        public static bool Prefix(HideoutRepresentation __instance, IEnumerable<JsonType.ItemToHandover> items, ref IEnumerable<IItemOperationResult> __result)
         {
-            List <GInterface424> list = null;
-            using (IEnumerator<GClass1433> enumerator = items.GetEnumerator())
+            List <IItemOperationResult> list = null;
+            
+            using (IEnumerator<JsonType.ItemToHandover> enumerator = items.GetEnumerator())
             {
                 while (enumerator.MoveNext())
                 {
-                    HideoutClass.Class1919 @class = new HideoutClass.Class1919();
+                    HideoutRepresentation.CG_RemoveSpentItems @class = new HideoutRepresentation.CG_RemoveSpentItems();
                     @class.itemReference = enumerator.Current;
-                    Item item = __instance.List_2.FirstOrDefault(new Func<Item, bool>(@class.method_0));
+                    Item item = __instance._allStashItems.FirstOrDefault(@class.method_0);
                     bool flag;
+                    
                     if (item == null)
                     {
-                        flag = null != null;
+                        flag = false;
                     }
                     else
                     {
                         ItemAddress currentAddress = item.CurrentAddress;
-                        flag = ((currentAddress != null) ? currentAddress.GetOwnerOrNull() : null) != null;
+                        flag = currentAddress?.GetOwnerOrNull() != null;
                     }
-                    if (flag)
-                    {
-                        if (list == null)
-                        {
-                            list = new List<GInterface424>();
-                        }
-                        GStruct154<GInterface424> gstruct = default(GStruct154<GInterface424>);
-                        StackableItemItemClass stackableItemItemClass = item as StackableItemItemClass;
 
-                        if (stackableItemItemClass != null && stackableItemItemClass.StackObjectsCount > @class.itemReference.count)
-                        {
-                            gstruct = InteractionsHandlerClass.SplitToNowhere(stackableItemItemClass, @class.itemReference.count, __instance.InventoryController_0, __instance.InventoryController_0, false).Cast<GClass3422, GInterface424>();
-                        }
-                        else if(item.StackMaxSize > 1 && item.StackObjectsCount > @class.itemReference.count)
-                        {
-                            gstruct = InteractionsHandlerClass.SplitToNowhere(item, @class.itemReference.count, __instance.InventoryController_0, __instance.InventoryController_0, false).Cast<GClass3422, GInterface424>();
-                        }
-                        else
-                        {
-                            gstruct = InteractionsHandlerClass.Remove(item, __instance.InventoryController_0, false).Cast<GClass3410, GInterface424>();
-                        }
-                        if (gstruct.Succeeded)
-                        {
-                            list.Add(gstruct.Value);
-                        }
-                        else
-                        {
-                            Debug.LogError(gstruct.Error);
-                        }
+                    if (!flag)
+                    {
+                        continue;
+                    }
+                    
+                    if (list == null)
+                    {
+                        list = new List<IItemOperationResult>();
+                    }
+                    
+                    OperationResult<IItemOperationResult> gstruct = default(OperationResult<IItemOperationResult>);
+                    StackableItem stackableItemItemClass = item as StackableItem;
+
+                    if (stackableItemItemClass != null && stackableItemItemClass.StackObjectsCount > @class.itemReference.count)
+                    {
+                        gstruct = ItemManipulator.SplitToNowhere(stackableItemItemClass, @class.itemReference.count, __instance._inventoryController, __instance._inventoryController, false).Cast<SplitToNowhereResult, IItemOperationResult>();
+                    }
+                    else if(item.StackMaxSize > 1 && item.StackObjectsCount > @class.itemReference.count)
+                    {
+                        gstruct = ItemManipulator.SplitToNowhere(item, @class.itemReference.count, __instance._inventoryController, __instance._inventoryController, false).Cast<SplitToNowhereResult, IItemOperationResult>();
+                    }
+                    else
+                    {
+                        gstruct = ItemManipulator.Remove(item, __instance._inventoryController).Cast<RemoveResult, IItemOperationResult>();
+                    }
+                    if (gstruct.Succeeded)
+                    {
+                        list.Add(gstruct.Value);
+                    }
+                    else
+                    {
+                        Debug.LogError(gstruct.Error);
                     }
                 }
             }

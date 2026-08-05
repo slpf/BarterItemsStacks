@@ -1,1 +1,1 @@
-A simple mod that changes the stack size for barter items. SPT 4.0.0+.
+A simple mod that changes the stack size for barter items. SPT 4.1.0+.

@@ -13,40 +13,46 @@ namespace BarterItemsStacksClient.Patches.Hideout
     {
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(HideoutClass), nameof(HideoutClass.method_21));
+            return AccessTools.Method(typeof(HideoutRepresentation), nameof(HideoutRepresentation.GetItemReferences));
         }
 
         [PatchPrefix]
-        public static bool Prefix(HideoutClass __instance, ItemRequirement[] requirements, ref List<GStruct299> __result)
+        public static bool Prefix(HideoutRepresentation __instance, ItemRequirement[] requirements, ref List<HideoutItemReference> __result)
         {
             requirements = requirements.Where(r => r.IntCount > 0).ToArray();
-            List<GStruct299> list = new List<GStruct299>(requirements.Length);
+            List<HideoutItemReference> list = new List<HideoutItemReference>(requirements.Length);
+            
             foreach (ItemRequirement itemRequirement in requirements)
             {
                 bool flag = itemRequirement is ToolRequirement;
                 int num = itemRequirement.IntCount;
-                __instance.method_40(HideoutClass.List_0, itemRequirement);
-                foreach (Item item in HideoutClass.List_0)
+                
+                __instance.CG_GetItemReferences(HideoutRepresentation._itemsBuffer, itemRequirement);
+                
+                foreach (Item item in HideoutRepresentation._itemsBuffer)
                 {
-                    StackableItemItemClass stackableItemItemClass = item as StackableItemItemClass;
+                    StackableItem stackableItemItemClass = item as StackableItem;
 
-                    GStruct299 gstruct = new GStruct299
+                    HideoutItemReference gstruct = new HideoutItemReference
                     {
                         Item = item,
                         IsTool = flag,
                         Count = ((stackableItemItemClass == null) ? (item.StackMaxSize > 1) ? Mathf.Min(num, item.StackObjectsCount) : 1 : Mathf.Min(num, stackableItemItemClass.StackObjectsCount)),
-                        RemoveReferenceItem = stackableItemItemClass != null ? num >= stackableItemItemClass.StackObjectsCount : (item.StackMaxSize > 1 ? num >= item.StackObjectsCount : true),
+                        RemoveReferenceItem = stackableItemItemClass != null ? num >= stackableItemItemClass.StackObjectsCount : (item.StackMaxSize <= 1 || num >= item.StackObjectsCount),
                         Requirements = requirements
                     };
+                    
                     num -= gstruct.Count;
                     list.Add(gstruct);
+                    
                     if (num <= 0)
                     {
                         break;
                     }
                 }
             }
-            HideoutClass.List_0.Clear();
+            
+            HideoutRepresentation._itemsBuffer.Clear();
 
             __result = list;
 

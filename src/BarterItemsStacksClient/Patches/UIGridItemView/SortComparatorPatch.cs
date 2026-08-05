@@ -9,7 +9,7 @@ public class SortComparatorPatch : ModulePatch
 {
     protected override MethodBase GetTargetMethod()
     {
-        return AccessTools.Method(AccessTools.TypeByName("GClass3381+Class2438"), "Compare");
+        return AccessTools.Method(AccessTools.TypeByName("EFT.InventoryLogic.ItemSorter+ItemSortingComparer"), "Compare");
     }
     
     [PatchPrefix]
@@ -44,28 +44,28 @@ public class SortComparatorPatch : ModulePatch
 
     private static float GetResourcePercent(Item item)
     {
-        var resource = item.GetItemComponent<ResourceComponent>();
+        ResourceComponent resource = item.GetItemComponent<ResourceComponent>();
         if (resource != null && resource.MaxResource > 0)
         {
             return resource.Value / resource.MaxResource;
         }
 
-        var medkit = item.GetItemComponent<MedKitComponent>();
+        MedKitComponent medkit = item.GetItemComponent<MedKitComponent>();
         if (medkit != null && medkit.MaxHpResource > 0)
         {
             return medkit.HpResource / medkit.MaxHpResource;
         }
 
-        var food = item.GetItemComponent<FoodDrinkComponent>();
+        FoodDrinkComponent food = item.GetItemComponent<FoodDrinkComponent>();
         if (food != null && food.MaxResource > 0)
         {
             return food.HpPercent / food.MaxResource;
         }
 
-        var repair = item.GetItemComponent<RepairKitComponent>();
+        RepairKitComponent repair = item.GetItemComponent<RepairKitComponent>();
         if (repair != null)
         {
-            var max = ((RepairKitsTemplateClass)item.Template).MaxRepairResource;
+            int max = ((RepairKitTemplate) item.Template).MaxRepairResource;
             if (max > 0)
             {
                 return repair.Resource / max;

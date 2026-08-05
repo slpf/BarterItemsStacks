@@ -1,6 +1,7 @@
 ﻿using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Extensions;
 using SPTarkov.Server.Core.Helpers;
+using SPTarkov.Server.Core.Helpers.Profile;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.ItemEvent;
 using SPTarkov.Server.Core.Routers;
@@ -11,7 +12,7 @@ namespace BarterItemsStacks.RemoveOneFromStack
     [Injectable]
     public class RemoveOneFromStackController(EventOutputHolder eventOutputHolder, InventoryHelper inventoryHelper, HttpResponseUtil httpResponseUtil)
     {
-        public async ValueTask<ItemEventRouterResponse> RemoveOneFromStack(PmcData pmcData, RemoveOneFromStackModel body, string sessionId)
+        public async ValueTask<ItemEventRouterResponse> RemoveOneFromStack(PmcData pmcData, RemoveOneFromStackModel body, string sessionId, CancellationToken cancellationToken)
         {
             var output = eventOutputHolder.GetOutput(sessionId);
 
@@ -35,7 +36,7 @@ namespace BarterItemsStacks.RemoveOneFromStack
 
             if (cur > 1)
             {
-                item.Upd.StackObjectsCount = cur - 1;
+                item.Upd?.StackObjectsCount = cur - 1;
 
                 return output;
             }

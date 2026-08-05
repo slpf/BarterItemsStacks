@@ -1,5 +1,8 @@
 ﻿using SPT.Reflection.Patching;
 using System.Reflection;
+using BarterItemsStacksClient.RemoveOneFromStack;
+using EFT.InventoryLogic;
+using EFT.InventoryLogic.Operations;
 
 namespace BarterItemsStacksClient.Patches
 {
@@ -7,15 +10,15 @@ namespace BarterItemsStacksClient.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(TraderControllerClass).GetMethod(nameof(TraderControllerClass.ConvertOperationResultToOperation));
+            return typeof(ItemController).GetMethod(nameof(ItemController.ConvertOperationResultToOperation));
         }
 
         [PatchPrefix]
-        public static bool Prefix(TraderControllerClass __instance, IRaiseEvents operationResult, ref BaseInventoryOperationClass __result)
+        public static bool Prefix(ItemController __instance, IOperationResult operationResult, ref AbstractOperation __result)
         {
-            if (operationResult is RemoveOneFromStack.RemoveOneFromStackResult removeResult)
+            if (operationResult is RemoveOneFromStackResult removeResult)
             {
-                __result = new RemoveOneFromStack.RemoveOneFromStackOperation(__instance.method_12(), __instance, removeResult);
+                __result = new RemoveOneFromStackOperation(__instance.GetAndIncrementNextOperationId(), __instance, removeResult);
                 return false;
             }
 

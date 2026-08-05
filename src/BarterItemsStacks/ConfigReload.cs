@@ -1,6 +1,7 @@
-﻿using SPTarkov.DI.Annotations;
-using SPTarkov.Server.Core.Models.Logging;
+﻿using SPTarkov.Common.Models.Logging;
+using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Models.Utils;
+using Spectre.Console;
 using System.Security.Cryptography;
 
 namespace BarterItemsStacks
@@ -26,7 +27,7 @@ namespace BarterItemsStacks
 
             if (string.IsNullOrWhiteSpace(pathToFile) || string.IsNullOrWhiteSpace(fileName))
             {
-                logger.LogWithColor($"[BarterItemsStacks] Config Watcher Error >> Bad path: {_filePath}", LogTextColor.White, LogBackgroundColor.Red);
+                logger.LogWithColor($"[BarterItemsStacks] Config Watcher Error >> Bad path: {_filePath}", Color.White, Color.Red);
                 return;
             }
 
@@ -97,16 +98,16 @@ namespace BarterItemsStacks
 
                 if (success)
                 {
-                    logger.LogWithColor("[BarterItemsStacks] Config reloaded.", LogTextColor.Green, LogBackgroundColor.Black);
+                    logger.LogWithColor("[BarterItemsStacks] Config reloaded.", Color.Green, Color.Black);
                 } else
                 {
-                    logger.LogWithColor("[BarterItemsStacks] Config not reloaded.", LogTextColor.Red, LogBackgroundColor.Black);
+                    logger.LogWithColor("[BarterItemsStacks] Config not reloaded.", Color.Red, Color.Black);
                 }
                 
             }
             catch (Exception ex)
             {
-                logger.LogWithColor($"[BarterItemsStacks] Config Watcher Error >> {ex}", LogTextColor.White, LogBackgroundColor.Red);
+                logger.LogWithColor($"[BarterItemsStacks] Config Watcher Error >> {ex}", Color.White, Color.Red);
             }
             finally
             {

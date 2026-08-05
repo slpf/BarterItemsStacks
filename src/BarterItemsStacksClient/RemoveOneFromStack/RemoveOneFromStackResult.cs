@@ -1,66 +1,61 @@
-﻿using EFT.InventoryLogic;
+﻿using Diz.LanguageExtensions;
+using EFT.InventoryLogic;
 
 namespace BarterItemsStacksClient.RemoveOneFromStack
 {
-    public class RemoveOneFromStackResult : IExecute, IRaiseEvents, IRollback, GInterface424, GInterface433
+    public class RemoveOneFromStackResult(
+        Item item,
+        ItemAddress from,
+        OperationResult<DiscardResult> discard,
+        ItemController itemController)
+        : IItemOperationResult, ISyncOperationResult
     {
-        private readonly Item _item;
-        private readonly GStruct154<GClass3408> _discard;
+        public Item Item => item;
+        public Item ResultItem => item;
+        public bool IsDiscard => discard.Succeeded && discard.Value != null;
 
-        public RemoveOneFromStackResult(Item item, ItemAddress from, GStruct154<GClass3408> discard, TraderControllerClass itemController)
+        public ItemAddress From { get; } = from;
+
+        public ItemController ItemController { get; } = itemController;
+
+        public bool CanExecute(ItemController itemController)
         {
-            _item = item;
-            From = from;
-            _discard = discard;
-            ItemController = itemController;
+            return item != null && item.StackObjectsCount > 0;
         }
 
-        public Item Item => _item;
-        public Item ResultItem => _item;
-        public bool IsDiscard => _discard.Succeeded && _discard.Value != null;
-
-        public ItemAddress From { get; }
-
-        public TraderControllerClass ItemController { get; }
-
-        public bool CanExecute(TraderControllerClass itemController)
+        public OperationResult Execute()
         {
-            return _item != null && _item.StackObjectsCount > 0;
-        }
-
-        public GStruct153 Execute()
-        {
-            return InteractionsHandlerClassExtensions.RemoveOneFromStack(_item, ItemController, simulate: false);
+            return InteractionsHandlerClassExtensions.RemoveOneFromStack(item, ItemController, simulate: false);
         }
 
         public void RaiseEvents(IItemOwner controller, CommandStatus status)
         {
-            if (_discard.Succeeded && _discard.Value != null)
+            if (discard.Succeeded && discard.Value != null)
             {
-                _discard.Value.RaiseEvents(controller, status);
+                discard.Value.RaiseEvents(controller, status);
                 return;
             }
 
-            _item?.RaiseRefreshEvent(false, true);
+            item?.RaiseRefreshEvent(false, true);
         }
 
         public void RollBack()
         {
-            if (_discard.Succeeded && _discard.Value != null)
+            if (discard.Succeeded && discard.Value != null)
             {
-                _discard.Value.RollBack();
+                discard.Value.RollBack();
                 return;
             }
 
-            if (_item == null) return;
+            if (item == null) return;
 
-            _item.StackObjectsCount = _item.StackObjectsCount + 1;
-            _item.RaiseRefreshEvent(false, true);
+            item.StackObjectsCount = item.StackObjectsCount + 1;
+            item.RaiseRefreshEvent(false, true);
         }
 
         public RemoveOneFromStackModel ToRemoveOneFromStackModel()
         {
-            return new RemoveOneFromStackModel(_item.Id);
+            return new RemoveOneFromStackModel(item.Id);
         }
     }
 }

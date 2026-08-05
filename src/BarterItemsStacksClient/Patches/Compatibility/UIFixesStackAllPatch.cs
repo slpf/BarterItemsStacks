@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Diz.LanguageExtensions;
 using HarmonyLib;
 using SPT.Reflection.Patching;
@@ -27,7 +26,7 @@ namespace BarterItemsStacksClient.Patches.Compatibility
         {
             Error error = null;
             
-            var mergeableItems = compoundItem.Grids.SelectMany(g => g.Items)
+            Item[] mergeableItems = compoundItem.Grids.SelectMany(g => g.Items)
                 .Where(i => i.StackObjectsCount < i.StackMaxSize && Utils.IsFullResource(i))
                 .Reverse()
                 .ToArray();
@@ -39,9 +38,9 @@ namespace BarterItemsStacksClient.Patches.Compatibility
                     continue;
                 }
 
-                if (FindStackForMerge(compoundItem.Grids, item, out Item targetItem))
+                if (Utils.FindStackForMerge(compoundItem.Grids, item, out Item targetItem))
                 {
-                    var operation = InteractionsHandlerClass.TransferOrMerge(item, targetItem, inventoryController, true);
+                    OperationResult<ITransferOrMergeResult> operation = ItemManipulator.TransferOrMerge(item, targetItem, inventoryController, true);
                     if (operation.Succeeded)
                     {
                         await inventoryController.TryRunNetworkTransaction(operation);
@@ -54,22 +53,6 @@ namespace BarterItemsStacksClient.Patches.Compatibility
             }
 
             return error;
-        }
-
-        private static bool FindStackForMerge(IEnumerable<StashGridClass> grids, Item itemToMerge, out Item mergeableItem)
-        {
-            bool ignoreFir = Utils.CanIgnoreFirStatus(itemToMerge, itemToMerge);
-
-            mergeableItem = grids.SelectMany(x => x.Items)
-                .Where(x => x != itemToMerge)
-                .Where(x => x.TemplateId == itemToMerge.TemplateId)
-                .Where(x => ignoreFir || x.SpawnedInSession == itemToMerge.SpawnedInSession)
-                .Where(x => x.StackObjectsCount < x.StackMaxSize)
-                .Where(Utils.IsFullResource)
-                .OrderByDescending(x => x.StackObjectsCount)
-                .FirstOrDefault();
-
-            return mergeableItem != null;
         }
     }
 }

@@ -37,17 +37,21 @@ namespace BarterItemsStacksClient
             new TransferMaxPatch().Enable();
             new HideoutMethod23Patch().Enable();
             new HideoutMethod21Patch().Enable();
-            new COCCheckCompatibilityPatch().Enable();
+            new CircleCheckCompatibilityPatch().Enable();
             new CanApplyItemPatch().Enable();
-            new RepaitKitStackUsePatch().Enable();
+            new RepairKitStackUsePatch().Enable();
             new PlaceItemTriggerPatch().Enable();
             new PlaceItemProtectPatch().Enable();
+            new PlantTripwirePatch().Enable();
             new ConvertOperationResultToOperationPatch().Enable();
             new SortComparatorPatch().Enable();    
+            new ContainerStackPatch().Enable();
+            new TopUpStackPatch().Enable();
+            new NestedQuickMoveStackOrderPatch().Enable();
             
             if (HarmonyLib.AccessTools.TypeByName("MergeConsumables.Patches.ExecutePossibleAction_Patch") != null)
             {
-                new MCExecutePossibleActionPatch().Enable();
+                new MergeConsumablesPatch().Enable();
             }
 
             if (HarmonyLib.AccessTools.TypeByName("UIFixes.SortPatches+StackFirstPatch") != null)
@@ -57,7 +61,7 @@ namespace BarterItemsStacksClient
             
             if (HarmonyLib.AccessTools.TypeByName("StashManagementHelper.Helpers.ItemManager") != null)
             {
-                new StashManagementHelperMergePatch().Enable();
+                new StashManagementHelperPatch().Enable();
             }
         }
     }

@@ -1,33 +1,35 @@
-﻿using EFT.InventoryLogic;
+﻿using BarterItemsStacksClient.RemoveOneFromStack;
+using Diz.LanguageExtensions;
+using EFT.InventoryLogic;
 
 namespace BarterItemsStacksClient
 {
-    internal class InteractionsHandlerClassExtensions
+    internal static class InteractionsHandlerClassExtensions
     {
-        public static GStruct154<RemoveOneFromStack.RemoveOneFromStackResult> RemoveOneFromStack(
+        public static OperationResult<RemoveOneFromStackResult> RemoveOneFromStack(
         Item item,
-        TraderControllerClass itemController,
+        ItemController itemController,
         bool simulate)
         {
             if (item == null)
             {
-                return new GClass1522("Item is null");
+                return new StringError("Item is null");
             }
                 
-            var from = item.CurrentAddress;
+            ItemAddress from = item.CurrentAddress;
 
-            var originalCount = item.StackObjectsCount;
+            int originalCount = item.StackObjectsCount;
 
             if (originalCount <= 0)
             {
-                return new GClass1522("Invalid StackObjectsCount");
+                return new StringError("Invalid StackObjectsCount");
             }
                 
-            GStruct154<GClass3408> discard = default;
+            OperationResult<DiscardResult> discard = default;
 
             if (originalCount == 1)
             {
-                discard = InteractionsHandlerClass.Discard(item, itemController, false);
+                discard = ItemManipulator.Discard(item, itemController, false);
                 if (!discard.Succeeded)
                 {
                     return discard.Error;
@@ -50,7 +52,7 @@ namespace BarterItemsStacksClient
                 }
             }
 
-            return new RemoveOneFromStack.RemoveOneFromStackResult(item, from, discard, itemController);
+            return new RemoveOneFromStackResult(item, from, discard, itemController);
         }
     }
 }

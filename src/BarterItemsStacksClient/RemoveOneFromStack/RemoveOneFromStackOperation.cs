@@ -1,15 +1,16 @@
 ﻿using Comfort.Common;
 using EFT.InventoryLogic;
 using System.Threading.Tasks;
+using EFT.InventoryLogic.Operations;
 
 namespace BarterItemsStacksClient.RemoveOneFromStack
 {
-    public class RemoveOneFromStackOperation : GClass3475<RemoveOneFromStackResult> 
+    public class RemoveOneFromStackOperation : AbstractAsyncOperation<RemoveOneFromStackResult> 
     {
         public Item Item;
         public ItemAddress Address;
 
-        public RemoveOneFromStackOperation(ushort id, TraderControllerClass controller, RemoveOneFromStackResult result) 
+        public RemoveOneFromStackOperation(ushort id, ItemController controller, RemoveOneFromStackResult result) 
             : base(id, controller, result) 
         {
             Item = result.Item;
@@ -20,22 +21,22 @@ namespace BarterItemsStacksClient.RemoveOneFromStack
         {
             if (Item.StackObjectsCount == 1)
             {
-                await method_3(Item, Address, null, null);
-                return method_6();
+                await OutProcess(Item, Address, null, null);
+                return ExecuteAndFinish();
             }
 
-            await method_3(Item, Address, Address, null);
+            await OutProcess(Item, Address, Address, null);
             Execute();
-            await method_4(Item, Address, null);
-            return method_5();
+            await InProcess(Item, Address, null);
+            return FinishExecution();
         }
 
-        public override GClass3471 ToBaseInventoryCommand(string ownerId)
+        public override BaseInventoryCommand ToBaseInventoryCommand(string ownerId)
         {
-            return Gstruct156_0.Value.ToRemoveOneFromStackModel();
+            return _executableResult.Value.ToRemoveOneFromStackModel();
         }
 
-        public override BaseDescriptorClass ToDescriptor()
+        public override EFT.InventoryOperationDescriptor ToDescriptor()
         {
             return new RemoveOneFromStackDescriptor
             {

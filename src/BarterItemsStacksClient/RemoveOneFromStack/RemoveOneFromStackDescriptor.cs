@@ -1,21 +1,24 @@
-﻿using EFT;
+﻿using Diz.LanguageExtensions;
+using EFT;
+using EFT.InventoryLogic;
+using EFT.InventoryLogic.Operations;
 
 namespace BarterItemsStacksClient.RemoveOneFromStack
 {
-    public class RemoveOneFromStackDescriptor : BaseDescriptorClass
+    public class RemoveOneFromStackDescriptor : InventoryOperationDescriptor
     {
         public string Item;
 
-        public override GStruct152<BaseInventoryOperationClass> ToInventoryOperation(IPlayer player)
+        public override OperationCreationResult<AbstractOperation> ToInventoryOperation(IPlayer player)
         {
-            var itemResult = player.FindItemById(Item);
+            Option<Item> itemResult = player.FindItemById(Item);
 
             if (itemResult.Failed)
             {
                 return itemResult.Error;
             }        
 
-            var result = InteractionsHandlerClassExtensions.RemoveOneFromStack(itemResult.Value, player.InventoryController,simulate: true);
+            OperationResult<RemoveOneFromStackResult> result = InteractionsHandlerClassExtensions.RemoveOneFromStack(itemResult.Value, player.InventoryController,simulate: true);
 
             if (result.Failed)
             {

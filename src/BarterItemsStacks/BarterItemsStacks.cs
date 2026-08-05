@@ -1,20 +1,23 @@
 ﻿using System.Reflection;
 using System.Text.Json.Serialization;
 using BarterItemsStack;
+using SPTarkov.Common.Models.Logging;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Extensions;
 using SPTarkov.Server.Core.Helpers;
+using SPTarkov.Server.Core.Helpers.Server;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
-using SPTarkov.Server.Core.Models.Logging;
+using SPTarkov.Server.Core.Models.Enums;
 using SPTarkov.Server.Core.Models.Spt.Mod;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 using SPTarkov.Server.Core.Models.Utils;
 using SPTarkov.Server.Core.Servers;
 using SPTarkov.Server.Core.Services;
 using SPTarkov.Server.Core.Utils;
-using SPTarkov.Server.Core.Utils.Json.Converters;
 using SPTarkov.Server.Web;
+using Color = Spectre.Console.Color;
 using Path = System.IO.Path;
 
 [assembly: AssemblyProduct(ModInfo.Name)]
@@ -27,19 +30,23 @@ using Path = System.IO.Path;
 
 namespace BarterItemsStacks;
 
-public record ModMetadata : AbstractModMetadata, IModWebMetadata
+public sealed record ModMetadata : IModMetadata, IModBlazorMetadata
 {
-    public override string ModGuid { get; init; } = ModInfo.Guid;
-    public override string Name { get; init; } = ModInfo.Name;
-    public override string Author { get; init; } = ModInfo.Author;
-    public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new(ModInfo.Version);
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
-    public override List<string>? Incompatibilities { get; init; }
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
-    public override string? Url { get; init; }
-    public override bool? IsBundleMod { get; init; }
-    public override string? License { get; init; } = ModInfo.License;
+    public string ModGuid { get; init; } = ModInfo.Guid;
+    public string Name { get; init; } = ModInfo.Name;
+    public string Author { get; init; } = ModInfo.Author;
+    public List<string>? Contributors { get; init; }
+    public SemanticVersioning.Version Version { get; init; } = new(ModInfo.Version);
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.0");
+    public bool HasPrepatcher { get; init; }
+    public List<string>? Incompatibilities { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public string? Url { get; init; }
+    public string License { get; init; } = ModInfo.License;
+
+    public string? WWWRootUrl { get; init; }
+    public string? HomePage { get; init; } = "/bis";
+    public string? HomePageDescription { get; init; } = "Barter Items Stacks configuration";
 }
 
 public class ItemsConfig
@@ -95,27 +102,26 @@ public class ItemsConfig
     }
 }
 
-[Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 50000)]
-public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServer, JsonUtil jsonUtil, ConfigReload configReload, DatabaseService databaseService, ISptLogger<BarterItemsStacks> logger) : IOnLoad
+[Injectable(TypePriority = OnLoadOrder.PostLoad + 50000)]
+public class BarterItemsStacks(ModHelper modHelper, TemplateTable templateTable, ConfigReload configReload, ISptLogger<BarterItemsStacks> logger) : IOnLoad
 {
     public const string RofsRouter = "RemoveOneFromStack";
+    public const string PotRouter = "PlantOneTripwire";
     private readonly record struct DefaultProps(int? StackMaxSize, int? MaxResource, int? MaxHpResource, int? MaxRepairResource, int? Height, int? Width, double? Weight, double? Price);
     private readonly Dictionary<string, DefaultProps> _defaults = new(StringComparer.Ordinal);
     private readonly HashSet<string> _lastApplied = new(StringComparer.Ordinal);
 
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         var pathToMod = modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly());
 
         if (LoadConfig(pathToMod))
         {
-            logger.LogWithColor("[BarterItemsStacks] Config loaded.", LogTextColor.Green, LogBackgroundColor.Black);
+            logger.LogWithColor("[BarterItemsStacks] Config loaded.", Color.Green, Color.Black);
         }
 
-        configReload.Start(pathToMod, ItemsConfig.FileName, () => { return Task.FromResult(LoadConfig(pathToMod)); });
+        configReload.Start(pathToMod, ItemsConfig.FileName, () => Task.FromResult(LoadConfig(pathToMod)));
 
-        BaseInteractionRequestDataConverter.RegisterModDataHandler(RofsRouter, jsonUtil.Deserialize<RemoveOneFromStack.RemoveOneFromStackModel>);
-        
         return Task.CompletedTask;
     }
 
@@ -123,8 +129,8 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
     {
         try
         {
-            var itemsDb = databaseServer.GetTables().Templates.Items;
-            var handbook = databaseService.GetHandbook();
+            var itemsDb = templateTable.Items;
+            var handbook = templateTable.Handbook;
             
             foreach (var tplId in _lastApplied)
             {
@@ -154,7 +160,7 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
             if (!File.Exists(configPath))
             {
                 DefaultConfig.Create(configPath);
-                logger.LogWithColor("[BarterItemsStacks] Default config generated.", LogTextColor.Green, LogBackgroundColor.Black);
+                logger.LogWithColor("[BarterItemsStacks] Default config generated.", Color.Green, Color.Black);
             }
             
             var config = modHelper.GetJsonDataFromFile<ItemsConfig>(pathToMod, ItemsConfig.FileName);
@@ -196,7 +202,7 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
         }
         catch (Exception ex)
         {
-            logger.LogWithColor($"[BarterItemsStacks] Loading Error >> {ex.Message}", LogTextColor.White, LogBackgroundColor.Red);
+            logger.LogWithColor($"[BarterItemsStacks] Loading Error >> {ex.Message}", Color.White, Color.Red);
             return false;
         }
     }

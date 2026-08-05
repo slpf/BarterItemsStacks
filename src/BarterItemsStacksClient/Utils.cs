@@ -1,16 +1,18 @@
 ﻿using EFT.InventoryLogic;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BarterItemsStacksClient
 {
-    internal class Utils
+    internal static class Utils
     {
-        internal static bool TryGetResource(Item item, out float cur, out float max)
+        private static bool TryGetResource(Item item, out float cur, out float max)
         {
             cur = 0f;
             max = 0f;
 
-            var resource = item.GetItemComponent<ResourceComponent>();
+            ResourceComponent resource = item.GetItemComponent<ResourceComponent>();
             if (resource != null)
             {
                 cur = resource.Value;
@@ -18,7 +20,7 @@ namespace BarterItemsStacksClient
                 return true;
             }
 
-            var medkit = item.GetItemComponent<MedKitComponent>();
+            MedKitComponent medkit = item.GetItemComponent<MedKitComponent>();
             if (medkit != null)
             {
                 cur = medkit.HpResource;
@@ -26,7 +28,7 @@ namespace BarterItemsStacksClient
                 return true;
             }
 
-            var food = item.GetItemComponent<FoodDrinkComponent>();
+            FoodDrinkComponent food = item.GetItemComponent<FoodDrinkComponent>();
             if (food != null)
             {
                 cur = food.HpPercent;
@@ -34,11 +36,11 @@ namespace BarterItemsStacksClient
                 return true;
             }
 
-            var repair = item.GetItemComponent<RepairKitComponent>();
+            RepairKitComponent repair = item.GetItemComponent<RepairKitComponent>();
             if (repair != null)
             {
                 cur = repair.Resource;
-                max = ((RepairKitsTemplateClass)item.Template).MaxRepairResource;
+                max = ((RepairKitTemplate) item.Template).MaxRepairResource;
                 return true;
             }
 
@@ -47,7 +49,7 @@ namespace BarterItemsStacksClient
         
         internal static bool IsFullResource(Item item)
         {
-            if (!TryGetResource(item, out var cur, out var max))
+            if (!TryGetResource(item, out float cur, out float max))
             {
                 return true;
             }
@@ -57,8 +59,8 @@ namespace BarterItemsStacksClient
         
         internal static bool CanMergeResources(Item item, Item targetItem)
         {
-            bool itemHasResource = TryGetResource(item, out var aCur, out var aMax);
-            bool targetHasResource = TryGetResource(targetItem, out var bCur, out var bMax);
+            bool itemHasResource = TryGetResource(item, out float aCur, out float aMax);
+            bool targetHasResource = TryGetResource(targetItem, out float bCur, out float bMax);
 
             if (!itemHasResource || !targetHasResource)
             {
@@ -70,27 +72,43 @@ namespace BarterItemsStacksClient
         
         internal static bool CanIgnoreFirStatus(Item item, Item targetItem)
         {
-            if (Settings.FirStackableResources.Value && item is BarterItemItemClass && targetItem is BarterItemItemClass)
+            if (Settings.FirStackableResources.Value && item is BarterItem && targetItem is BarterItem)
             {
                 return true;
             }
 
-            if (Settings.FirStackableMed.Value && item is MedsItemClass && targetItem is MedsItemClass)
+            if (Settings.FirStackableMed.Value && item is Meds && targetItem is Meds)
             {
                 return true;
             }
 
-            if (Settings.FirStackableFoodDrinks.Value && item is FoodDrinkItemClass && targetItem is FoodDrinkItemClass)
+            if (Settings.FirStackableFoodDrinks.Value && item is FoodDrink && targetItem is FoodDrink)
             {
                 return true;
             }
 
-            if (Settings.FirStackableRepairKits.Value && item is RepairKitsItemClass && targetItem is RepairKitsItemClass)
+            if (Settings.FirStackableRepairKits.Value && item is RepairKit && targetItem is RepairKit)
             {
                 return true;
             }
 
             return false;
+        }
+        
+        public static bool FindStackForMerge(IEnumerable<IContainer> containers, Item itemToMerge, out Item mergeableItem,  int minimumStackSpace = 0)
+        {
+            bool ignoreFir = CanIgnoreFirStatus(itemToMerge, itemToMerge);
+
+            mergeableItem = containers.SelectMany(x => x.Items)
+                .Where(x => x != itemToMerge)
+                .Where(x => x.TemplateId == itemToMerge.TemplateId)
+                .Where(x => ignoreFir || x.SpawnedInSession == itemToMerge.SpawnedInSession)
+                .Where(x => x.StackObjectsCount < x.StackMaxSize)
+                .Where(IsFullResource)
+                .OrderByDescending(x => x.StackObjectsCount)
+                .FirstOrDefault(x => minimumStackSpace <= x.StackMaxSize - x.StackObjectsCount);
+
+            return mergeableItem != null;
         }
     }
 }
