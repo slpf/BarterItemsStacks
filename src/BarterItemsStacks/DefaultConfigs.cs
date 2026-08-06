@@ -1,8 +1,14 @@
 ﻿namespace BarterItemsStacks;
 
-public static class DefaultConfig
+public class DefaultConfigs
 {
-    private const string Config = """
+	private const string ParamsConfig = """
+{
+	"WeightLimitMultiplier": 1.0
+}
+""";
+	
+    private const string ItemsConfig = """
 {
 	"Items": {
 		// Cash
@@ -246,8 +252,13 @@ public static class DefaultConfig
 }
 """;
     
-    public static void Create(string configPath)
+    public static void CreateParamsConfig(string configPath)
     {
-	    File.WriteAllText(configPath, Config);
+	    File.WriteAllText(configPath, ParamsConfig);
+    }
+    
+    public static void CreateItemsConfig(string configPath)
+    {
+	    File.WriteAllText(configPath, ItemsConfig);
     }
 }

@@ -70,7 +70,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Prevent copying of references to output -->
     <Reference Update="@(Reference)">
       <Private>false</Private>
     </Reference>

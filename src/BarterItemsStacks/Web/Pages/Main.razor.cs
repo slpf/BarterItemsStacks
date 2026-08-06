@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+using BarterItemsStacks.Configs;
 using BarterItemsStacks.Web.Config;
 using BarterItemsStacks.Web.Models;
 using BarterItemsStacks.Web.Services;
@@ -46,6 +47,7 @@ public partial class Main : ComponentBase, IDisposable
     private string _selectedPreset = "";
     private bool _presetsOpen;
     private string? _presetConfirmName;
+    private string _weightMultiplierText = "";
     
     private readonly HashSet<string> _collapsedCategories = new(StringComparer.Ordinal);
     
@@ -94,6 +96,7 @@ public partial class Main : ComponentBase, IDisposable
             _pathToMod = _modHelper.GetAbsolutePathToModFolder(typeof(ItemsConfig).Assembly);
             _cfg = _modHelper.GetJsonDataFromFile<ItemsConfig>(_pathToMod, ItemsConfig.FileName);
             ScanPresets();
+            LoadWeightMultiplier();
             
             var localeKey = _localeService.GetDesiredGameLocale();
             var localeLocalized = _localeService.GetLocaleDb();
@@ -376,6 +379,46 @@ public partial class Main : ComponentBase, IDisposable
         _presetConfirmName = null;
     }
 
+    private void LoadWeightMultiplier()
+    {
+        if (_pathToMod is null)
+        {
+            return;
+        }
+
+        var paramsPath = Path.Combine(_pathToMod, ParamsConfig.FileName);
+        if (!File.Exists(paramsPath))
+        {
+            DefaultConfigs.CreateParamsConfig(paramsPath);
+        }
+
+        var paramsCfg = _modHelper.GetJsonDataFromFile<ParamsConfig>(_pathToMod, ParamsConfig.FileName);
+        _weightMultiplierText = FormatWeight(paramsCfg.WeightLimitRaw ?? 1f);
+    }
+
+    private void OnWeightInput(ChangeEventArgs e)
+    {
+        _weightMultiplierText = e.Value?.ToString() ?? "";
+    }
+
+    private void OnWeightBlur()
+    {
+        if (float.TryParse(_weightMultiplierText, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+        {
+            _weightMultiplierText = FormatWeight(v);
+        }
+        else
+        {
+            _weightMultiplierText = "1.0";
+        }
+    }
+
+    private static string FormatWeight(float v)
+    {
+        var s = v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return s.Contains('.') ? s : s + ".0";
+    }
+
     private sealed record PresetEntry(string Name, string File);
 
     // --- bulk ---
@@ -627,6 +670,8 @@ public partial class Main : ComponentBase, IDisposable
             
             File.SetLastWriteTimeUtc(dst, DateTime.UtcNow);
 
+            await SaveParamsConfig();
+
             ShowToast("Saved.", ToastDurationMs);
         }
         catch (Exception ex)
@@ -641,6 +686,32 @@ public partial class Main : ComponentBase, IDisposable
         }
     }
     
+    private async Task SaveParamsConfig()
+    {
+        if (_pathToMod is null)
+        {
+            return;
+        }
+
+        if (!float.TryParse(_weightMultiplierText, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var weightMult))
+        {
+            return;
+        }
+
+        var text = "{\n\t\"WeightLimitMultiplier\": " + weightMult.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\n}";
+        var dst = Path.Combine(_pathToMod, ParamsConfig.FileName);
+
+        await using (var fs = new FileStream(dst, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+        await using (var sw = new StreamWriter(fs, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)))
+        {
+            await sw.WriteAsync(text);
+            await sw.FlushAsync();
+            fs.Flush(flushToDisk: true);
+        }
+
+        File.SetLastWriteTimeUtc(dst, DateTime.UtcNow);
+    }
+
     private string BuildConfigJsonc()
     {
         var sb = new StringBuilder();
