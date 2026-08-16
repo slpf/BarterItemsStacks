@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <SPTRefDir>../../..</SPTRefDir>
+    <SPTRefDir>../../deps40</SPTRefDir>
     
     <AssemblySearchPaths>
       $(SPTRefDir)/BepInEx/core;
