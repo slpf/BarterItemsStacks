@@ -18,6 +18,8 @@ public static class ParentNames
                 { "5448e8d04bdc2ddf718b4569", "Food"},
                 { "5448e8d64bdc2dce718b4568", "Drinks"},
                 { "543be5cb4bdc2deb348b4568", "Ammo containers"}, // doesn't work correctly 
+                { "5485a8684bdc2da71d8b4567", "Ammo"},
+                { "57864c322459775490116fbf", "Household goods"},
                 { "567849dd4bdc2d150f8b456e", "Maps"},
                 { "5448f3a64bdc2d60728b456a", "Injectors"},
                 { "5448f3ac4bdc2dce718b4569", "Injury treatment"},
@@ -28,7 +30,8 @@ public static class ParentNames
                 { "5447e0e74bdc2d3c308b4567", "Special items"},
                 { "66abb0743f4d8b145b1612c1", "Multitools"},
                 { "616eb7aea207f41933308f46", "Repair kits"},
-                { "57864bb7245977548b3b66c2", "Tools"}
+                { "57864bb7245977548b3b66c2", "Tools"},
+                
             }
             .ToImmutableDictionary(StringComparer.Ordinal);
 
