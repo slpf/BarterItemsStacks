@@ -2,7 +2,7 @@
 
 namespace BarterItemsStacksClient;
 
-public class Settings
+public static class Settings
 {
     public static ConfigEntry<bool> FirStackableResources {get; set;}
     public static ConfigEntry<bool> FirStackableMed {get; set;}

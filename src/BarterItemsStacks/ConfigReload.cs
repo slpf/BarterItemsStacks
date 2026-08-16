@@ -1,4 +1,4 @@
-﻿using SPTarkov.DI.Annotations;
+using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Models.Logging;
 using SPTarkov.Server.Core.Models.Utils;
 using System.Security.Cryptography;
@@ -8,74 +8,83 @@ namespace BarterItemsStacks
     [Injectable]
     public sealed class ConfigReload(ISptLogger<ConfigReload> logger) : IDisposable
     {
-        private FileSystemWatcher? _watcher;
-        private Timer? _debounceTimer;
-        private readonly SemaphoreSlim _reloadLock = new(1, 1);
+        private readonly Dictionary<string, FileWatch> _watches = new(StringComparer.Ordinal);
 
-        private string? _filePath;
-        private Func<Task<bool>>? _action;
+        private sealed class FileWatch : IDisposable
+        {
+            public FileSystemWatcher Watcher = null!;
+            public Timer Debounce = null!;
+            public SemaphoreSlim Lock = null!;
+            public Func<Task<bool>> Action = null!;
+            public string FilePath = null!;
+            public byte[]? LastHash;
 
-        private byte[]? _lastHash;
+            public void Dispose()
+            {
+                Watcher.EnableRaisingEvents = false;
+                Watcher.Dispose();
+                Debounce.Dispose();
+                Lock.Dispose();
+            }
+        }
 
         public void Start(string pathToFile, string fileName, Func<Task<bool>> action)
         {
-            Stop();
-
-            _filePath = Path.Combine(pathToFile, fileName);
-            _action = action;
-
             if (string.IsNullOrWhiteSpace(pathToFile) || string.IsNullOrWhiteSpace(fileName))
             {
-                logger.LogWithColor($"[BarterItemsStacks] Config Watcher Error >> Bad path: {_filePath}", LogTextColor.White, LogBackgroundColor.Red);
+                logger.LogWithColor($"[BarterItemsStacks] Config Watcher Error >> Bad path: {Path.Combine(pathToFile, fileName)}", LogTextColor.White, LogBackgroundColor.Red);
                 return;
             }
 
-            _debounceTimer = new Timer(async _ => await ReloadDebounced().ConfigureAwait(false), null, Timeout.Infinite, Timeout.Infinite);
+            var filePath = Path.Combine(pathToFile, fileName);
 
-            _watcher = new FileSystemWatcher(pathToFile, fileName)
+            if (_watches.TryGetValue(filePath, out var existing))
+            {
+                existing.Dispose();
+                _watches.Remove(filePath);
+            }
+
+            var watch = new FileWatch
+            {
+                FilePath = filePath,
+                Action = action,
+                Lock = new SemaphoreSlim(1, 1),
+                LastHash = TryReadHash(filePath)
+            };
+
+            watch.Debounce = new Timer(
+                async state => await ReloadDebounced((FileWatch)state!).ConfigureAwait(false),
+                watch,
+                Timeout.Infinite,
+                Timeout.Infinite);
+
+            watch.Watcher = new FileSystemWatcher(pathToFile, fileName)
             {
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
                 IncludeSubdirectories = false,
-                EnableRaisingEvents = true,
+                EnableRaisingEvents = true
             };
 
-            _watcher.Changed += OnChangevent;
+            watch.Watcher.Changed += (_, _) => watch.Debounce.Change(500, Timeout.Infinite);
 
-            _lastHash = TryReadHash(_filePath);
+            _watches[filePath] = watch;
         }
 
         public void Stop()
         {
-            if (_watcher != null)
+            foreach (var watch in _watches.Values)
             {
-                _watcher.EnableRaisingEvents = false;
-                _watcher.Changed -= OnChangevent;
-                _watcher.Dispose();
-                _watcher = null;
+                watch.Dispose();
             }
-
-            _debounceTimer?.Dispose();
-            _debounceTimer = null;
-
-            _filePath = null;
-            _action = null;
-            _lastHash = null;
+            _watches.Clear();
         }
 
-        private void OnChangevent(object sender, FileSystemEventArgs e)
+        private async Task ReloadDebounced(FileWatch watch)
         {
-            _debounceTimer?.Change(500, Timeout.Infinite);
-        }
+            var filePath = watch.FilePath;
+            var reloadAction = watch.Action;
 
-        private async Task ReloadDebounced()
-        {
-            var filePath = _filePath;
-            var reloadAction = _action;
-
-            if (filePath == null || reloadAction == null)
-                return;
-
-            await _reloadLock.WaitAsync().ConfigureAwait(false);
+            await watch.Lock.WaitAsync().ConfigureAwait(false);
             try
             {
                 for (var i = 0; i < 10; i++)
@@ -83,10 +92,10 @@ namespace BarterItemsStacks
                     var hash = TryReadHash(filePath);
                     if (hash != null)
                     {
-                        if (_lastHash != null && hash.SequenceEqual(_lastHash))
+                        if (watch.LastHash != null && hash.SequenceEqual(watch.LastHash))
                             return;
 
-                        _lastHash = hash;
+                        watch.LastHash = hash;
                         break;
                     }
 
@@ -97,12 +106,12 @@ namespace BarterItemsStacks
 
                 if (success)
                 {
-                    logger.LogWithColor("[BarterItemsStacks] Config reloaded.", LogTextColor.Green, LogBackgroundColor.Black);
-                } else
-                {
-                    logger.LogWithColor("[BarterItemsStacks] Config not reloaded.", LogTextColor.Red, LogBackgroundColor.Black);
+                    logger.LogWithColor($"[BarterItemsStacks] Config reloaded: {Path.GetFileName(filePath)}", LogTextColor.Green, LogBackgroundColor.Black);
                 }
-                
+                else
+                {
+                    logger.LogWithColor($"[BarterItemsStacks] Config not reloaded: {Path.GetFileName(filePath)}", LogTextColor.Red, LogBackgroundColor.Black);
+                }
             }
             catch (Exception ex)
             {
@@ -110,7 +119,7 @@ namespace BarterItemsStacks
             }
             finally
             {
-                _reloadLock.Release();
+                watch.Lock.Release();
             }
         }
 
@@ -121,8 +130,7 @@ namespace BarterItemsStacks
                 if (!File.Exists(path))
                     return null;
 
-                var bytes = File.ReadAllBytes(path);
-                return SHA256.HashData(bytes);
+                return SHA256.HashData(File.ReadAllBytes(path));
             }
             catch
             {
@@ -133,7 +141,6 @@ namespace BarterItemsStacks
         public void Dispose()
         {
             Stop();
-            _reloadLock.Dispose();
         }
     }
 }

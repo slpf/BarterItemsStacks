@@ -13,7 +13,8 @@ public sealed class ItemsDbIndex
         DatabaseServer databaseServer,
         string otherCategoryName,
         IReadOnlyDictionary<string, string> localeLocalized,
-        IReadOnlyDictionary<string, string> localeEn)
+        IReadOnlyDictionary<string, string> localeEn,
+        CategoryResolver resolver)
     {
         var itemsDb = databaseServer.GetTables().Templates.Items;
 
@@ -45,7 +46,7 @@ public sealed class ItemsDbIndex
             {
                 displayName = GetName(localeLocalized, tplId, tpl.Properties?.Name);
                 englishName = GetName(localeEn, tplId, tpl.Properties?.Name);
-                category = CategoriesNames.Get(parent, otherCategoryName);
+                category = resolver.Resolve(tplId, parent, otherCategoryName);
             }
 
             _index.Add(new ItemSearchEntry(tplId, displayName, englishName, parent, category));

@@ -1,5 +1,7 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text;
+using BarterItemsStacks.Configs;
+using BarterItemsStacks.Web.Config;
 using BarterItemsStacks.Web.Models;
 using BarterItemsStacks.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -22,103 +24,90 @@ public partial class Main : ComponentBase, IDisposable
     [Inject] private DatabaseServer _databaseServer { get; set; } = default!;
     [Inject] private IJSRuntime _js { get; set; } = default!;
     [Inject] private LocaleService _localeService { get; set; } = default!;
-    
+
     private string? _error;
-    
+
     private int _searchRefreshToken;
-    
+
     private readonly Debouncer _toastClearDebouncer = new();
     private readonly Debouncer _highlightClearDebouncer = new();
 
-    private readonly Dictionary<string, string> _imgResById = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, string> _imgDataUriCache = new(StringComparer.Ordinal);
-    private string _unknownImgDataUri = "";
-    
+    private readonly ItemImages _images = new();
+
     private ItemsDbIndex? _itemsIndex;
+    private CategoryResolver? _resolver;
     private ItemsConfig? _cfg;
     private string? _pathToMod;
 
     private bool _isSaving;
-    
+    private bool _showCategoryEditor;
+    private readonly List<PresetEntry> _presets = new();
+    private string _selectedPreset = "";
+    private bool _presetsOpen;
+    private string? _presetConfirmName;
+    private string _weightMultiplierText = "";
+
     private readonly HashSet<string> _collapsedCategories = new(StringComparer.Ordinal);
-    
+
     private readonly Dictionary<string, ConfigItemRow> _configItemsById = new(StringComparer.Ordinal);
     private readonly HashSet<string> _inConfig = new(StringComparer.Ordinal);
-    
+
     private readonly HashSet<string> _knownParentTplIds = new(StringComparer.Ordinal);
     private readonly HashSet<string> _parentOverrideIds = new(StringComparer.Ordinal);
-    
+
     private List<ConfigItemRow> _parentOverrides = new();
     private List<CategoryGroup>? _viewCategories;
-    
+
     private string? _pendingScrollTplId;
     private string? _highlightTplId;
 
     private string? _toastMessage;
     private bool _toastVisible;
-	
-	private static readonly Lazy<string> _embeddedStyles = new(BuildEmbeddedStyles);
-    private static readonly Lazy<string> _embeddedScripts = new(BuildEmbeddedScripts);
-    private static string EmbeddedStyles => _embeddedStyles.Value;
-    private static string EmbeddedScripts => _embeddedScripts.Value;
-    
-    private string ItemImageSrc(string tplId)
-    {
-        if (string.IsNullOrWhiteSpace(tplId))
-        {
-            return _unknownImgDataUri;
-        }
 
-        if (_imgDataUriCache.TryGetValue(tplId, out var cached))
-        {
-            return cached;
-        }
+    private static string EmbeddedStyles => WebAssets.Styles;
+    private static string EmbeddedScripts => WebAssets.Scripts;
 
-        if (!_imgResById.TryGetValue(tplId, out var resName))
-        {
-            return _unknownImgDataUri;
-        }
-        
-        var uri = ToWebpDataUri(ReadEmbeddedBytes(Assembly.GetExecutingAssembly(), resName));
-        
-        _imgDataUriCache[tplId] = uri;
-        
-        return uri;
-    }
-    
+    private string ItemImageSrc(string tplId) => _images.Src(tplId);
+
     private static readonly FieldInfo? RuleStackField =
         typeof(ItemsConfig.ItemRule).GetField("StackSize", BindingFlags.Instance | BindingFlags.NonPublic);
 
     private static readonly FieldInfo? RuleMaxResField =
         typeof(ItemsConfig.ItemRule).GetField("MaxResource", BindingFlags.Instance | BindingFlags.NonPublic);
-    
+
     private static readonly FieldInfo? RuleHeightField =
         typeof(ItemsConfig.ItemRule).GetField("ItemHeight", BindingFlags.Instance | BindingFlags.NonPublic);
-    
+
     private static readonly FieldInfo? RuleWidthField =
         typeof(ItemsConfig.ItemRule).GetField("ItemWidth", BindingFlags.Instance | BindingFlags.NonPublic);
-    
+
     private static readonly FieldInfo? RuleWeightField =
         typeof(ItemsConfig.ItemRule).GetField("WeightMultiplier", BindingFlags.Instance | BindingFlags.NonPublic);
-    
+
     private static readonly FieldInfo? RulePriceField =
         typeof(ItemsConfig.ItemRule).GetField("PriceMultiplier", BindingFlags.Instance | BindingFlags.NonPublic);
-    
+
     protected override void OnInitialized()
     {
         try
         {
             _pathToMod = _modHelper.GetAbsolutePathToModFolder(typeof(ItemsConfig).Assembly);
             _cfg = _modHelper.GetJsonDataFromFile<ItemsConfig>(_pathToMod, ItemsConfig.FileName);
-            
+            ScanPresets();
+            LoadWeightMultiplier();
+
             var localeKey = _localeService.GetDesiredGameLocale();
             var localeLocalized = _localeService.GetLocaleDb();
             var localeEn = _localeService.GetLocaleDb("en");
 
-            _itemsIndex = new ItemsDbIndex(_databaseServer, OtherCategoryName, localeLocalized, localeEn);
-            
-            BuildEmbeddedImageIndex();
-            
+            CategoriesConfig.EnsureExists(_pathToMod);
+            var categoriesCfg = _modHelper.GetJsonDataFromFile<CategoriesConfig>(_pathToMod, CategoriesConfig.FileName);
+            _resolver = CategoryResolver.Build(categoriesCfg.Categories);
+
+            _itemsIndex = new ItemsDbIndex(_databaseServer, OtherCategoryName, localeLocalized, localeEn, _resolver);
+
+            _images.BuildIndex();
+
             var itemsDb = _databaseServer.GetTables().Templates.Items;
             foreach (var kvp in itemsDb)
             {
@@ -126,66 +115,20 @@ public partial class Main : ComponentBase, IDisposable
                     _knownParentTplIds.Add(kvp.Key.ToString());
             }
 
-            _configItemsById.Clear();
-            _inConfig.Clear();
-            _parentOverrideIds.Clear();
-
-            foreach (var kvp in _cfg.Items)
-            {
-                var tplId = kvp.Key;
-                var rule = kvp.Value;
-
-                if (_itemsIndex.TryGet(tplId, out var db))
-                {
-                    _configItemsById[tplId] = new ConfigItemRow(
-                        tplId,
-                        db.Name,
-                        db.Parent,
-                        db.Category,
-                        rule.Stack,
-                        rule.Resource,
-                        rule.Height,
-                        rule.Width,
-                        rule.Weight,
-                        rule.Price
-                    );
-                }
-                else
-                {
-                    _configItemsById[tplId] = new ConfigItemRow(
-                        tplId,
-                        "unknown",
-                        "unknown",
-                        OtherCategoryName,
-                        rule.Stack,
-                        rule.Resource,
-                        rule.Height,
-                        rule.Width,
-                        rule.Weight,
-                        rule.Price
-                    );
-                }
-
-                _inConfig.Add(tplId);
-                
-                if (_knownParentTplIds.Contains(tplId))
-                    _parentOverrideIds.Add(tplId);
-            }
-
-            RebuildView();
+            LoadItemsFromConfig(_cfg);
         }
         catch (Exception ex)
         {
             _error = ex.ToString();
         }
     }
-    
+
     public void Dispose()
     {
         _toastClearDebouncer?.Dispose();
         _highlightClearDebouncer?.Dispose();
     }
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -204,7 +147,7 @@ public partial class Main : ComponentBase, IDisposable
                 })();"
             );
         }
-        
+
         if (!string.IsNullOrWhiteSpace(_pendingScrollTplId))
         {
             var tpl = _pendingScrollTplId!;
@@ -216,7 +159,7 @@ public partial class Main : ComponentBase, IDisposable
             );
         }
     }
-    
+
     private static ItemsConfig.ItemRule CreateRule(int? stackSize, int? maxResource, int? height, int? width, double? weight, double? price)
     {
         var rule = new ItemsConfig.ItemRule();
@@ -237,20 +180,248 @@ public partial class Main : ComponentBase, IDisposable
             .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.TemplateId, StringComparer.Ordinal)
             .ToList();
-        
+
         var itemsOnly = GetNonParentItems();
-        
-        _viewCategories = ViewBuilder.Build(itemsOnly, OtherCategoryName);
+
+        _viewCategories = ViewBuilder.Build(itemsOnly, OtherCategoryName, _resolver!);
     }
-    
+
     private IEnumerable<ConfigItemRow> GetNonParentItems()
     {
         return _configItemsById.Values.Where(x => !_parentOverrideIds.Contains(x.TemplateId));
     }
 
+    private async Task OpenCategoryEditor()
+    {
+        _showCategoryEditor = true;
+        await _js.InvokeVoidAsync("eval", "document.documentElement.style.overflow='hidden';document.body.style.overflow='hidden';");
+    }
+
+    private async Task CloseCategoryEditor()
+    {
+        _showCategoryEditor = false;
+        await _js.InvokeVoidAsync("eval", "document.documentElement.style.overflow='';document.body.style.overflow='';");
+    }
+
+    private void RefreshCategories()
+    {
+        if (_pathToMod is null)
+        {
+            return;
+        }
+
+        try
+        {
+            CategoriesConfig.EnsureExists(_pathToMod);
+            var cfg = _modHelper.GetJsonDataFromFile<CategoriesConfig>(_pathToMod, CategoriesConfig.FileName);
+            var resolver = CategoryResolver.Build(cfg.Categories);
+            _resolver = resolver;
+
+            var localeLocalized = _localeService.GetLocaleDb();
+            var localeEn = _localeService.GetLocaleDb("en");
+            _itemsIndex = new ItemsDbIndex(_databaseServer, OtherCategoryName, localeLocalized, localeEn, resolver);
+
+            foreach (var row in _configItemsById.Values)
+            {
+                row.Category = resolver.Resolve(row.TemplateId, row.Parent, OtherCategoryName);
+            }
+
+            _searchRefreshToken++;
+            RebuildView();
+        }
+        catch
+        {
+        }
+    }
+
+    private void LoadItemsFromConfig(ItemsConfig cfg)
+    {
+        _configItemsById.Clear();
+        _inConfig.Clear();
+        _parentOverrideIds.Clear();
+        _parentOverrides.Clear();
+        _categoryBulk.Clear();
+
+        foreach (var kvp in cfg.Items)
+        {
+            var tplId = kvp.Key;
+            var rule = kvp.Value;
+
+            if (_itemsIndex != null && _itemsIndex.TryGet(tplId, out var db))
+            {
+                _configItemsById[tplId] = new ConfigItemRow(
+                    tplId,
+                    db.Name,
+                    db.Parent,
+                    db.Category,
+                    rule.Stack,
+                    rule.Resource,
+                    rule.Height,
+                    rule.Width,
+                    rule.Weight,
+                    rule.Price
+                );
+            }
+            else
+            {
+                _configItemsById[tplId] = new ConfigItemRow(
+                    tplId,
+                    "unknown",
+                    "unknown",
+                    OtherCategoryName,
+                    rule.Stack,
+                    rule.Resource,
+                    rule.Height,
+                    rule.Width,
+                    rule.Weight,
+                    rule.Price
+                );
+            }
+
+            _inConfig.Add(tplId);
+
+            if (_knownParentTplIds.Contains(tplId))
+            {
+                _parentOverrideIds.Add(tplId);
+            }
+        }
+
+        _searchRefreshToken++;
+        RebuildView();
+    }
+
+    private void ScanPresets()
+    {
+        _presets.Clear();
+
+        if (_pathToMod is null)
+        {
+            return;
+        }
+
+        var dir = Path.Combine(_pathToMod, "presets");
+        if (!Directory.Exists(dir))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(dir))
+        {
+            var ext = Path.GetExtension(file);
+            if (!ext.Equals(".json", StringComparison.OrdinalIgnoreCase) &&
+                !ext.Equals(".jsonc", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            _presets.Add(new PresetEntry(Path.GetFileNameWithoutExtension(file), Path.GetFileName(file)));
+        }
+    }
+
+    private void ApplyPreset(string presetName)
+    {
+        if (_pathToMod is null || _itemsIndex is null)
+        {
+            return;
+        }
+
+        var entry = _presets.FirstOrDefault(p => string.Equals(p.Name, presetName, StringComparison.Ordinal));
+        if (entry is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var preset = _modHelper.GetJsonDataFromFile<ItemsConfig>(Path.Combine(_pathToMod, "presets"), entry.File);
+            _cfg = preset;
+            LoadItemsFromConfig(_cfg);
+        }
+        catch (Exception ex)
+        {
+            ShowToast("Preset load failed: " + ex.Message, ToastErrorDurationMs);
+        }
+    }
+
+    private void TogglePresets()
+    {
+        _presetsOpen = !_presetsOpen;
+    }
+
+    private void ClosePresets()
+    {
+        _presetsOpen = false;
+    }
+
+    private void SelectPreset(string name)
+    {
+        _presetsOpen = false;
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            _presetConfirmName = name;
+        }
+    }
+
+    private void ConfirmApplyPreset()
+    {
+        var name = _presetConfirmName;
+        _presetConfirmName = null;
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            ApplyPreset(name);
+        }
+    }
+
+    private void CancelApplyPreset()
+    {
+        _presetConfirmName = null;
+    }
+
+    private void LoadWeightMultiplier()
+    {
+        if (_pathToMod is null)
+        {
+            return;
+        }
+
+        var paramsPath = Path.Combine(_pathToMod, ParamsConfig.FileName);
+        if (!File.Exists(paramsPath))
+        {
+            DefaultConfigs.CreateParamsConfig(paramsPath);
+        }
+
+        var paramsCfg = _modHelper.GetJsonDataFromFile<ParamsConfig>(_pathToMod, ParamsConfig.FileName);
+        _weightMultiplierText = FormatWeight(paramsCfg.WeightLimitRaw ?? 1f);
+    }
+
+    private void OnWeightInput(ChangeEventArgs e)
+    {
+        _weightMultiplierText = e.Value?.ToString() ?? "";
+    }
+
+    private void OnWeightBlur()
+    {
+        if (float.TryParse(_weightMultiplierText, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+        {
+            _weightMultiplierText = FormatWeight(v);
+        }
+        else
+        {
+            _weightMultiplierText = "1.0";
+        }
+    }
+
+    private static string FormatWeight(float v)
+    {
+        var s = v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return s.Contains('.') ? s : s + ".0";
+    }
+
+    private sealed record PresetEntry(string Name, string File);
+
     // --- bulk ---
     private readonly Dictionary<string, CategoryBulk> _categoryBulk = new(StringComparer.Ordinal);
-    
+
     private enum BulkField
     {
         MaxStackSize,
@@ -275,12 +446,12 @@ public partial class Main : ComponentBase, IDisposable
     {
         return _categoryBulk.GetValueOrDefault(categoryName) ?? (_categoryBulk[categoryName] = new CategoryBulk());
     }
-    
+
     private void OnCategoryBulkInput(string categoryName, BulkField field, ChangeEventArgs e)
     {
         var text = e.Value?.ToString() ?? "";
         var bulk = GetCategoryBulk(categoryName);
-        
+
         var targets = GetNonParentItems()
             .Where(x => string.Equals(x.Category, categoryName, StringComparison.Ordinal));
 
@@ -305,12 +476,12 @@ public partial class Main : ComponentBase, IDisposable
                 bulk.Width = text;
                 foreach (var item in targets) item.WidthText = text;
                 break;
-            
+
             case BulkField.Weight:
                 bulk.Weight = text;
                 foreach (var item in targets) item.WeightText = text;
                 break;
-            
+
             case BulkField.Price:
                 bulk.Price = text;
                 foreach (var item in targets) item.PriceText = text;
@@ -330,7 +501,7 @@ public partial class Main : ComponentBase, IDisposable
         else
             _collapsedCategories.Add(categoryName);
     }
-    
+
     private void RemoveCategoryItems(string categoryName)
     {
         var itemsToRemove = GetNonParentItems()
@@ -348,7 +519,7 @@ public partial class Main : ComponentBase, IDisposable
             _inConfig.Remove(item.TemplateId);
             _cfg?.Items.Remove(item.TemplateId);
         }
-    
+
         _categoryBulk.Remove(categoryName);
         _searchRefreshToken++;
 
@@ -360,7 +531,7 @@ public partial class Main : ComponentBase, IDisposable
     private void SelectSuggestion(string tplId)
     {
         _ = TryAddToConfig(tplId);
-        
+
         if (_configItemsById.TryGetValue(tplId, out var row) && !_parentOverrideIds.Contains(tplId))
             _collapsedCategories.Remove(row.Category);
 
@@ -377,7 +548,7 @@ public partial class Main : ComponentBase, IDisposable
 
         StateHasChanged();
     }
-    
+
     private bool TryAddToConfig(string tplId)
     {
         if (_cfg is null || _itemsIndex is null)
@@ -389,9 +560,9 @@ public partial class Main : ComponentBase, IDisposable
         {
             return false;
         }
-        
+
         _cfg.Items[tplId] = CreateRule(stackSize: null, maxResource: null, height: null, width: null, weight: null, price: null);
-        
+
         if (_itemsIndex.TryGet(tplId, out var db))
         {
             _configItemsById[tplId] = new ConfigItemRow(tplId, db.Name, db.Parent, db.Category, 0, 0, 0, 0, 0,0);
@@ -405,7 +576,7 @@ public partial class Main : ComponentBase, IDisposable
         {
             _configItemsById[tplId] = new ConfigItemRow(tplId, "unknown", "unknown", OtherCategoryName, 0, 0,0,0,0,0);
         }
-        
+
         _inConfig.Add(tplId);
 
         _searchRefreshToken++;
@@ -413,7 +584,7 @@ public partial class Main : ComponentBase, IDisposable
         RebuildView();
         return true;
     }
-    
+
     private Task<List<Suggestion>> SearchItemsAsync(string query)
     {
         if (_itemsIndex is null)
@@ -458,7 +629,7 @@ public partial class Main : ComponentBase, IDisposable
             {
                 Items = new Dictionary<string, ItemsConfig.ItemRule>(StringComparer.Ordinal)
             };
-            
+
             foreach (var row in _parentOverrides.OrderBy(x => x.TemplateId, StringComparer.Ordinal))
             {
                 int? stack = row.MaxStackSize > 0 ? row.MaxStackSize : null;
@@ -467,10 +638,10 @@ public partial class Main : ComponentBase, IDisposable
                 int? width = row.Width > 0 ? row.Width : null;
                 double? weight = row.Weight > 0 ? row.Weight : null;
                 double? price = row.Price > 0 ? row.Price : null;
-                
+
                 newCfg.Items[row.TemplateId] = CreateRule(stack, res, height, width, weight, price);
             }
-            
+
             foreach (var row in GetNonParentItems().OrderBy(x => x.TemplateId, StringComparer.Ordinal))
             {
                 int? stack = row.MaxStackSize > 0 ? row.MaxStackSize : null;
@@ -479,14 +650,14 @@ public partial class Main : ComponentBase, IDisposable
                 int? width = row.Width > 0 ? row.Width : null;
                 double? weight = row.Weight > 0 ? row.Weight : null;
                 double? price = row.Price > 0 ? row.Price : null;
-                
+
                 newCfg.Items[row.TemplateId] = CreateRule(stack, res, height, width, weight, price);
             }
 
             var text = BuildConfigJsonc();
-            
+
             var dst = Path.Combine(_pathToMod, ItemsConfig.FileName);
-            
+
             await using (var fs = new FileStream(dst, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
             await using (var sw = new StreamWriter(fs, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)))
             {
@@ -494,8 +665,10 @@ public partial class Main : ComponentBase, IDisposable
                 await sw.FlushAsync();
                 fs.Flush(flushToDisk: true);
             }
-            
+
             File.SetLastWriteTimeUtc(dst, DateTime.UtcNow);
+
+            await SaveParamsConfig();
 
             ShowToast("Saved.", ToastDurationMs);
         }
@@ -510,13 +683,39 @@ public partial class Main : ComponentBase, IDisposable
             await InvokeAsync(StateHasChanged);
         }
     }
-    
+
+    private async Task SaveParamsConfig()
+    {
+        if (_pathToMod is null)
+        {
+            return;
+        }
+
+        if (!float.TryParse(_weightMultiplierText, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var weightMult))
+        {
+            return;
+        }
+
+        var text = "{\n\t\"WeightLimitMultiplier\": " + weightMult.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\n}";
+        var dst = Path.Combine(_pathToMod, ParamsConfig.FileName);
+
+        await using (var fs = new FileStream(dst, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+        await using (var sw = new StreamWriter(fs, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)))
+        {
+            await sw.WriteAsync(text);
+            await sw.FlushAsync();
+            fs.Flush(flushToDisk: true);
+        }
+
+        File.SetLastWriteTimeUtc(dst, DateTime.UtcNow);
+    }
+
     private string BuildConfigJsonc()
     {
         var sb = new StringBuilder();
         sb.AppendLine("{");
         sb.AppendLine("  \"Items\": {");
-    
+
         var blocks = CollectConfigBlocks();
         var totalItems = blocks.Sum(b => b.Rows.Count);
         var remaining = totalItems;
@@ -530,7 +729,7 @@ public partial class Main : ComponentBase, IDisposable
         sb.AppendLine("}");
         return sb.ToString();
     }
-    
+
     private List<(string? Header, List<ConfigItemRow> Rows)> CollectConfigBlocks()
     {
         var blocks = new List<(string? Header, List<ConfigItemRow> Rows)>();
@@ -551,13 +750,13 @@ public partial class Main : ComponentBase, IDisposable
 
         return blocks;
     }
-    
+
     private void AppendCategoryBlock(StringBuilder sb, (string? Header, List<ConfigItemRow> Rows) block, ref int remaining)
     {
         if (block.Header is not null)
         {
-            var comment = string.Equals(block.Header, "Parents", StringComparison.Ordinal) 
-                ? "Parents" 
+            var comment = string.Equals(block.Header, "Parents", StringComparison.Ordinal)
+                ? "Parents"
                 : SanitizeComment(block.Header);
             sb.AppendLine($"    // {comment}");
         }
@@ -568,7 +767,7 @@ public partial class Main : ComponentBase, IDisposable
             AppendItemRuleLine(sb, row, addComma: remaining > 0);
         }
     }
-    
+
     private static void AppendItemRuleLine(StringBuilder sb, ConfigItemRow row, bool addComma)
     {
         sb.Append("    \"");
@@ -580,7 +779,7 @@ public partial class Main : ComponentBase, IDisposable
         {
             sb.Append(",");
         }
-        
+
         if (!string.IsNullOrWhiteSpace(row.Name) && !string.Equals(row.Name, "null", StringComparison.OrdinalIgnoreCase))
         {
             sb.Append("\t// ");
@@ -609,7 +808,7 @@ public partial class Main : ComponentBase, IDisposable
         if (width is not null) parts.Add($"\"ItemWidth\": {width.Value}");
         if (weight is not null) parts.Add($"\"WeightMultiplier\": {weight.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
         if (price is not null) parts.Add($"\"PriceMultiplier\": {price.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
-        
+
         return parts.Count == 0
             ? "{ }"
             : "{ " + string.Join(", ", parts) + " }";
@@ -623,27 +822,27 @@ public partial class Main : ComponentBase, IDisposable
             .Replace("\t", " ")
             .Trim();
     }
-    
+
     private void ShowToast(string message, int durationMs = 1000)
     {
         _toastMessage = message;
         _toastVisible = true;
-        
+
         _ = InvokeAsync(StateHasChanged);
-        
+
         _toastClearDebouncer.Debounce(durationMs, () =>
         {
             return HideToastAsync();
         });
     }
-    
+
     private async Task HideToastAsync()
     {
         _toastVisible = false;
         await InvokeAsync(StateHasChanged);
-        
+
         await Task.Delay(300);
-        
+
         _toastMessage = null;
         await InvokeAsync(StateHasChanged);
     }
@@ -653,108 +852,4 @@ public partial class Main : ComponentBase, IDisposable
         await _js.InvokeVoidAsync("eval", "window.scrollTo({top:0,behavior:\"smooth\"});");
     }
 
-    // ---- assets helpers ----
-    private static string BuildEmbeddedScripts()
-    {
-        var asm = Assembly.GetExecutingAssembly();
-        var names = asm.GetManifestResourceNames();
-
-        var jsRes = names.FirstOrDefault(n =>
-            n.EndsWith("inputFilters.js", StringComparison.OrdinalIgnoreCase));
-
-        if (jsRes is null)
-            throw new InvalidOperationException("Embedded resource 'inputFilters.js' not found. Check that it is under Web\\Assets and marked as EmbeddedResource.");
-
-        return ReadText(asm, jsRes);
-    }
-    
-    private static string BuildEmbeddedStyles()
-    {
-        var asm = Assembly.GetExecutingAssembly();
-        var names = asm.GetManifestResourceNames();
-        
-        var cssRes = names.FirstOrDefault(n =>
-            n.EndsWith("bis.css", StringComparison.OrdinalIgnoreCase));
-
-        var fontRes = names.FirstOrDefault(n =>
-            n.EndsWith("bender.otf", StringComparison.OrdinalIgnoreCase));
-
-        if (cssRes is null)
-            throw new InvalidOperationException("Embedded resource 'bis.css' not found. Check that it is under Web\\Assets and marked as EmbeddedResource.");
-
-        if (fontRes is null)
-            throw new InvalidOperationException("Embedded resource 'bender.otf' not found. Check that it is under Web\\Assets and marked as EmbeddedResource.");
-
-        var css = ReadText(asm, cssRes);
-        var fontBytes = ReadEmbeddedBytes(asm, fontRes);
-        var b64 = Convert.ToBase64String(fontBytes);
-
-        var fontFace =
-            $@"
-            @font-face {{
-              font-family: 'Bender';
-              src: url('data:font/otf;base64,{b64}') format('opentype');
-              font-weight: 400;
-              font-style: normal;
-              font-display: swap;
-            }}
-            ";
-        
-        return fontFace + "\n" + css;
-    }
-
-    private static string ReadText(Assembly asm, string resourceName)
-    {
-        using var s = asm.GetManifestResourceStream(resourceName)
-                  ?? throw new InvalidOperationException($"Embedded resource stream not found: {resourceName}");
-        using var r = new StreamReader(s);
-        return r.ReadToEnd();
-    }
-    
-    private static byte[] ReadEmbeddedBytes(Assembly asm, string resourceName)
-    {
-        using var s = asm.GetManifestResourceStream(resourceName)
-                      ?? throw new InvalidOperationException($"Embedded image resource not found: {resourceName}");
-
-        using var ms = new MemoryStream();
-        s.CopyTo(ms);
-        return ms.ToArray();
-    }
-    
-    private void BuildEmbeddedImageIndex()
-    {
-        _imgResById.Clear();
-        _imgDataUriCache.Clear();
-
-        var asm = Assembly.GetExecutingAssembly();
-        var names = asm.GetManifestResourceNames();
-
-        foreach (var res in names)
-        {
-            if (!res.EndsWith(".webp", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (res.IndexOf(".items.", StringComparison.OrdinalIgnoreCase) < 0)
-                continue;
-            
-            var parts = res.Split('.');
-            if (parts.Length < 2)
-                continue;
-
-            var id = parts[^2];
-            if (!string.IsNullOrWhiteSpace(id))
-                _imgResById[id] = res;
-        }
-        
-        if (_imgResById.TryGetValue("unknown", out var unkRes))
-        {
-            _unknownImgDataUri = ToWebpDataUri(ReadEmbeddedBytes(asm, unkRes));
-        }
-        else
-        {
-            _unknownImgDataUri = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
-        }
-    }
-    
-    private static string ToWebpDataUri(byte[] bytes) => "data:image/webp;base64," + Convert.ToBase64String(bytes);
 }

@@ -8,7 +8,7 @@
 
 <PageTitle>Barter Items Stacks - Config Editor</PageTitle>
 
-<div>
+<div style="padding-bottom:16px">
     @if (!string.IsNullOrEmpty(_error))
     {
         <h1>Barter Items Stacks</h1>
@@ -25,7 +25,59 @@
     {
         <div class="header">
             <h1>Barter Items Stacks</h1>
-            <button class="saveButton" type="button" @onclick="SaveAsync" disabled="@_isSaving">SAVE CONFIG</button>
+            <div class="header-actions">
+                <label class="weight-field" title="Weight limit multiplier">
+                    <span class="weight-icon">
+                        <svg viewBox="0 0 700 800">
+                            <g transform="translate(0,-252.36214)">
+                                <path fill-rule="evenodd" d="m 334.07738,292.5341 c -107.67445,-0.0155 -194.98501,54.62116 -195.02098,122.03894 0.0938,27.14948 14.639,53.50474 41.33573,74.89841 -42.96129,3.56165 -70.52165,8.49299 -77.41631,13.852 -0.92119,0.82178 -0.6548,0.58303 -0.92119,0.82178 -0.57351,0.60087 -0.88452,1.20372 -0.93222,1.80701 -29.854756,163.81414 -61.203153,325.7932 -90.283736,468.11661 -3.8855723,19.01639 152.109236,35.14835 339.892036,35.14825 187.78176,-10e-5 339.9824,-15.73928 339.88938,-35.14825 0.0117,-2.72121 -0.33077,-3.5052 -0.33077,-3.5052 L 565.0951,504.66274 l -0.89521,-1.33929 c -6.75546,-5.32591 -33.92348,-10.23408 -76.37607,-13.7981 26.65628,-21.42152 41.14434,-47.7964 41.17227,-74.95231 C 528.96019,347.182 441.7162,292.55643 334.08445,292.5341 Z m 0,50.75302 c 70.56012,0.002 127.75263,32.33708 127.73195,72.21594 -0.0805,31.55988 -36.42285,59.43237 -89.73522,68.8217 -12.71192,-0.20965 -25.5866,-0.31901 -38.49067,-0.32695 -12.70213,0.0111 -25.37329,0.12043 -37.88627,0.32695 -53.18256,-9.45531 -89.37167,-37.3121 -89.40718,-68.8217 -0.0207,-39.8911 57.20562,-72.23116 127.78739,-72.21594 z"></path>
+                            </g>
+                        </svg>
+                    </span>
+                    <input class="weight-input" type="text" inputmode="decimal"
+                           maxlength="5"
+                           data-filter="weight"
+                           placeholder="1.0"
+                           value="@_weightMultiplierText"
+                           @oninput="OnWeightInput"
+                           @onblur="OnWeightBlur" />
+                </label>
+
+                <div class="preset-dropdown @(_presetsOpen ? "open" : "")">
+                    <button type="button" class="preset-trigger" title="Apply preset" @onclick="TogglePresets">
+                        <span class="preset-label">@(string.IsNullOrWhiteSpace(_selectedPreset) ? "- Presets -" : _selectedPreset)</span>
+                        <span class="preset-arrow">
+                            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
+                    </button>
+                    @if (_presetsOpen)
+                    {
+                        <div class="preset-backdrop" @onclick="ClosePresets"></div>
+                        <div class="preset-menu">
+                            @foreach (var p in _presets)
+                            {
+                                var name = p.Name;
+                                <div class="preset-option @(name == _selectedPreset ? "preset-option--active" : "")" @onclick="() => SelectPreset(name)">@name</div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <button class="btn-soft icon-btn" type="button" title="Categories" @onclick="OpenCategoryEditor">
+                    <svg viewBox="0 0 24 24">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </button>
+                <button class="saveButton icon-btn" type="button" title="Save config" @onclick="SaveAsync" disabled="@_isSaving">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8 15 3"></polyline>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <Search SearchFunc="SearchItemsAsync"
@@ -112,9 +164,14 @@
                         </div>
                     </div>
 
-                    <button type="button" title="Remove all lines from category"
+                    <button class="icon-btn" type="button" title="Remove all lines from category"
                             @onclick="() => RemoveCategoryItems(c.Name)"
-                            @onclick:stopPropagation="true">REMOVE</button>
+                            @onclick:stopPropagation="true">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
                 </summary>
 
                 <div>
@@ -134,4 +191,21 @@
     }
 
     <button type="button" class="scrollTop" title="Scroll to top" @onclick="ScrollToTopAsync">▲</button>
+
+    @if (_showCategoryEditor)
+    {
+        <CategoriesEditor OnChanged="RefreshCategories" OnClose="CloseCategoryEditor" />
+    }
+
+    @if (_presetConfirmName is not null)
+    {
+        <div class="confirm-backdrop" @onclick="CancelApplyPreset"></div>
+        <div class="confirm-box">
+            <p>Apply preset "@_presetConfirmName"? This will replace the current items in the configurator.</p>
+            <div class="confirm-actions">
+                <button class="btn-apply" type="button" @onclick="ConfirmApplyPreset">Apply</button>
+                <button class="btn-cancel" type="button" @onclick="CancelApplyPreset">Cancel</button>
+            </div>
+        </div>
+    }
 </div>

@@ -40,6 +40,33 @@
             return s;
         }
 
+        if (kind === "weight") {
+            s = s.replace(/,/g, ".").replace(/[^\d.]/g, "");
+
+            const firstDot = s.indexOf(".");
+            if (firstDot !== -1) {
+                s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
+            }
+
+            if (s.length > 1 && s[0] === "0" && s[1] !== ".") {
+                s = s.replace(/^0+/, "");
+                if (s === "" || s.startsWith(".")) s = "0" + s;
+            }
+
+            const hasDot = s.indexOf(".") !== -1;
+            const parts = s.split(".");
+            let intPart = parts[0] || "";
+            let fracPart = parts.length > 1 ? parts[1] : "";
+
+            if (intPart.length > 3) intPart = intPart.slice(0, 3);
+            if (fracPart.length > 3) fracPart = fracPart.slice(0, 3);
+            if (intPart.length + fracPart.length > 4) {
+                fracPart = fracPart.slice(0, Math.max(0, 4 - intPart.length));
+            }
+
+            return hasDot ? intPart + "." + fracPart : intPart;
+        }
+
         return s;
     }
 
@@ -78,6 +105,24 @@
             return dotCount <= 1;
         }
 
+        if (kind === "weight") {
+            if (!/^[0-9.,]*$/.test(t)) return false;
+
+            const next = valueAfterInsert(el, t).replace(/,/g, ".");
+            const dotCount = (next.match(/\./g) || []).length;
+            if (dotCount > 1) return false;
+
+            const parts = next.split(".");
+            const intPart = parts[0] || "";
+            const fracPart = parts.length > 1 ? parts[1] : "";
+
+            if (intPart.length > 3) return false;
+            if (fracPart.length > 3) return false;
+            if (intPart.length + fracPart.length > 4) return false;
+
+            return true;
+        }
+
         return true;
     }
 
@@ -94,7 +139,7 @@
         if (!(el instanceof HTMLInputElement)) return;
 
         const kind = getKind(el);
-        if (kind !== "uint" && kind !== "udouble") return;
+        if (kind !== "uint" && kind !== "udouble" && kind !== "weight") return;
 
         if (el.getAttribute(ATTACHED_ATTR) === "1") return;
         el.setAttribute(ATTACHED_ATTR, "1");
@@ -153,7 +198,7 @@
         if (!root.querySelectorAll) return;
 
         root
-            .querySelectorAll('input[data-filter="uint"], input[data-filter="udouble"]')
+            .querySelectorAll('input[data-filter="uint"], input[data-filter="udouble"], input[data-filter="weight"]')
             .forEach(attachOne);
     }
 

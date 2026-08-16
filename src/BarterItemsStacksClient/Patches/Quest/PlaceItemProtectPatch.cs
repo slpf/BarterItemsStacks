@@ -1,12 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Comfort.Common;
+using Diz.LanguageExtensions;
 using EFT;
+using EFT.Interactive;
 using EFT.InventoryLogic;
+using EFT.UI;
 using HarmonyLib;
 using SPT.Reflection.Patching;
+using System.Collections;
+using System.Reflection;
+using BarterItemsStacksClient.RemoveOneFromStack;
 using UnityEngine;
 
 namespace BarterItemsStacksClient.Patches.Quest
@@ -20,60 +22,68 @@ namespace BarterItemsStacksClient.Patches.Quest
 
         [PatchPrefix]
         public static bool Prefix(Player.PlayerInventoryController __instance,
-            Item item,
-            string zone,
-            Vector3 position,
-            Quaternion rotation,
-            float setupTime,
-            Callback callback)
+            Item item, string zone, Vector3 position, Quaternion rotation, float setupTime, Callback callback)
         {
-            if (item.StackObjectsCount <= 1)
-                return true;
-            
-            var sortingTable = __instance.Inventory.SortingTable;
-            
-            var location = sortingTable.Grid.FindLocationForItem(item);
-            
-            var beforeIds = new HashSet<string>(
-                __instance.Inventory.AllRealPlayerItems.Select(x => x.Id),
-                StringComparer.Ordinal);
+            if (item.StackObjectsCount <= 1) return true;
 
-            var split = InteractionsHandlerClass.SplitExact(item, 1, location, __instance, __instance, true);
-            
-            if (split.Failed)
+            GStruct154<RemoveOneFromStackResult> removeOne = InteractionsHandlerClassExtensions.RemoveOneFromStack(item, __instance, simulate: true);
+            if (removeOne.Failed)
             {
-                callback?.Invoke(split.ToResult());
+                callback?.Invoke(removeOne.ToResult());
                 return false;
             }
-            
-            __instance.TryRunNetworkTransaction(split, result =>
-                {
-                    if (!result.Succeed)
-                    {
-                        callback?.Invoke(result);
-                        return;
-                    }
 
-                    var newItem = __instance.Inventory.AllRealPlayerItems
-                        .FirstOrDefault(x =>
-                            x != null &&
-                            !beforeIds.Contains(x.Id) &&
-                            x.TemplateId == item.TemplateId &&
-                            x.StackObjectsCount == 1 &&
-                            x.CurrentAddress != null &&
-                            x.CurrentAddress.IsChildOf(sortingTable, false));
-
-                    if (newItem == null)
-                    {
-                        callback?.Invoke(result);
-                        return;
-                    }
-                    
-                    __instance.SetupItem(newItem, zone, position, rotation, setupTime, callback);
-                }
-            );
+            __instance.TryRunNetworkTransaction(removeOne, result =>
+            {
+                if (result.Succeed)
+                    new BeaconArm(__instance.Player_0, item, zone, position, rotation).Start(setupTime);
+                callback?.Invoke(result);
+            });
 
             return false;
+        }
+
+        private class BeaconArm(Player player, Item stackItem, string zone, Vector3 position, Quaternion rotation)
+        {
+            private Item _beacon;
+            private IEnumerator _timer;
+
+            public void Start(float setupTime)
+            {
+                if (!Singleton<GInterface169>.Instantiated) return;
+                _beacon = stackItem.CloneItem(player.InventoryController);
+                _beacon.StackObjectsCount = 1;
+                GInterface169 level = Singleton<GInterface169>.Instance;
+                level.SetupItem(_beacon, player, position, rotation);
+                level.OnLootItemDestroyed += OnLootItemDestroyed;
+                _timer = StaticManager.Instance.StartBehaviourTimer(setupTime, OnCompleted);
+            }
+
+            private void OnCompleted()
+            {
+                if (Singleton<GInterface169>.Instantiated)
+                    Singleton<GInterface169>.Instance.DestroyLoot(_beacon.Id);
+                if (player != null)
+                {
+                    player.PlantItemLocalOnly(_beacon, zone);
+                    player.UpdateInteractionCast();
+                }
+            }
+
+            private void OnLootItemDestroyed(IKillableLootItem killable)
+            {
+                if (killable is LootItem lootItem && _beacon.Id.Equals(lootItem.ItemId))
+                {
+                    StaticManager.Instance.StopBehaviourTimer(ref _timer);
+                    if (Singleton<GInterface169>.Instantiated)
+                        Singleton<GInterface169>.Instance.OnLootItemDestroyed -= OnLootItemDestroyed;
+                    IPlayer lastOwner = lootItem.LastOwner;
+                    if (lastOwner != null
+                        && lastOwner.ProfileId == GamePlayerOwner.MyPlayer.ProfileId
+                        && MonoBehaviourSingleton<GameUI>.Instantiated)
+                        MonoBehaviourSingleton<GameUI>.Instance.BattleUiPanelExtraction.Close();
+                }
+            }
         }
     }
 }

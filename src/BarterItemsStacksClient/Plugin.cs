@@ -42,9 +42,15 @@ namespace BarterItemsStacksClient
             new RepaitKitStackUsePatch().Enable();
             new PlaceItemTriggerPatch().Enable();
             new PlaceItemProtectPatch().Enable();
+            new PlantTripwirePatch().Enable();
             new ConvertOperationResultToOperationPatch().Enable();
-            new SortComparatorPatch().Enable();    
-            
+            new SortComparatorPatch().Enable();
+            new ContainerStackPatch().Enable();
+            new TopUpStackPatch().Enable();
+            new NestedQuickMoveStackOrderPatch().Enable();
+            new SpecialSlotStackPatch().Enable();
+
+
             if (HarmonyLib.AccessTools.TypeByName("MergeConsumables.Patches.ExecutePossibleAction_Patch") != null)
             {
                 new MCExecutePossibleActionPatch().Enable();
@@ -58,6 +64,11 @@ namespace BarterItemsStacksClient
             if (HarmonyLib.AccessTools.TypeByName("StashManagementHelper.Helpers.ItemManager") != null)
             {
                 new StashManagementHelperMergePatch().Enable();
+            }
+
+            if (HarmonyLib.AccessTools.TypeByName("AdvancedStashSorting.Patches.SortPreparationPatch") != null)
+            {
+                new AdvancedStashSortingPatch().Enable();
             }
         }
     }

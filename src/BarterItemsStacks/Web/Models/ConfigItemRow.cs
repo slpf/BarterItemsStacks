@@ -7,7 +7,7 @@ public sealed class ConfigItemRow
     public string TemplateId { get; }
     public string Name { get; }
     public string Parent { get; }
-    public string Category { get; }
+    public string Category { get; set; }
     
     public int MaxStackSize { get; set; }
     public int MaxResource { get; set; }

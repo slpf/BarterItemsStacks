@@ -39,7 +39,7 @@ namespace BarterItemsStacksClient.Patches.Compatibility
                     continue;
                 }
 
-                if (FindStackForMerge(compoundItem.Grids, item, out Item targetItem))
+                if (Utils.FindStackForMerge(compoundItem.Grids, item, out Item targetItem))
                 {
                     var operation = InteractionsHandlerClass.TransferOrMerge(item, targetItem, inventoryController, true);
                     if (operation.Succeeded)
@@ -54,22 +54,6 @@ namespace BarterItemsStacksClient.Patches.Compatibility
             }
 
             return error;
-        }
-
-        private static bool FindStackForMerge(IEnumerable<StashGridClass> grids, Item itemToMerge, out Item mergeableItem)
-        {
-            bool ignoreFir = Utils.CanIgnoreFirStatus(itemToMerge, itemToMerge);
-
-            mergeableItem = grids.SelectMany(x => x.Items)
-                .Where(x => x != itemToMerge)
-                .Where(x => x.TemplateId == itemToMerge.TemplateId)
-                .Where(x => ignoreFir || x.SpawnedInSession == itemToMerge.SpawnedInSession)
-                .Where(x => x.StackObjectsCount < x.StackMaxSize)
-                .Where(Utils.IsFullResource)
-                .OrderByDescending(x => x.StackObjectsCount)
-                .FirstOrDefault();
-
-            return mergeableItem != null;
         }
     }
 }

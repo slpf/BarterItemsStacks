@@ -1,11 +1,12 @@
 ﻿using System.Reflection;
-using System.Text.Json.Serialization;
 using BarterItemsStack;
+using BarterItemsStacks.Configs;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Extensions;
 using SPTarkov.Server.Core.Helpers;
 using SPTarkov.Server.Core.Models.Common;
+using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Logging;
 using SPTarkov.Server.Core.Models.Spt.Mod;
@@ -42,84 +43,102 @@ public record ModMetadata : AbstractModMetadata, IModWebMetadata
     public override string? License { get; init; } = ModInfo.License;
 }
 
-public class ItemsConfig
-{
-    public const string FileName = "config.jsonc";
-
-    public Dictionary<string, ItemRule> Items { get; set; } = new();
-
-    public sealed class ItemRule
-    {
-        [JsonInclude]
-        private int? StackSize;
-
-        [JsonInclude]
-        private int? MaxResource;
-        
-        [JsonInclude]
-        private int? ItemHeight;
-
-        [JsonInclude]
-        private int? ItemWidth;
-        
-        [JsonInclude]
-        private double? WeightMultiplier;
-        
-        [JsonInclude]
-        private double? PriceMultiplier;
-
-        [JsonIgnore]
-        public int Stack => Gt0(StackSize ?? 0);
-
-        [JsonIgnore]
-        public int Resource => Gt0(MaxResource ?? 0);
-        
-        [JsonIgnore]
-        public int Height => Gt0(ItemHeight ?? 0);
-
-        [JsonIgnore]
-        public int Width => Gt0(ItemWidth ?? 0);
-        
-        [JsonIgnore]
-        public double Weight => Gt0(WeightMultiplier ?? 0);
-        
-        [JsonIgnore]
-        public double Price => Gt0(PriceMultiplier ?? 0);
-
-        private static int Gt0(int v) => v < 0 ? 0 : v;
-        
-        private static double Gt0(double v) => v < 0 ? 0 : v;
-
-        private static int Clamp(int v, int min, int max)
-            => v < min ? min : (v > max ? max : v);
-    }
-}
-
 [Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 50000)]
 public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServer, JsonUtil jsonUtil, ConfigReload configReload, DatabaseService databaseService, ISptLogger<BarterItemsStacks> logger) : IOnLoad
 {
     public const string RofsRouter = "RemoveOneFromStack";
+    public const string PotRouter = "PlantOneTripwire";
     private readonly record struct DefaultProps(int? StackMaxSize, int? MaxResource, int? MaxHpResource, int? MaxRepairResource, int? Height, int? Width, double? Weight, double? Price);
-    private readonly Dictionary<string, DefaultProps> _defaults = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, DefaultProps> _defaultTemplates = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, XYZ> _defaultWeights = new(StringComparer.Ordinal);
     private readonly HashSet<string> _lastApplied = new(StringComparer.Ordinal);
 
     public Task OnLoad()
     {
         var pathToMod = modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly());
 
-        if (LoadConfig(pathToMod))
+        if (LoadItemsConfig(pathToMod))
         {
             logger.LogWithColor("[BarterItemsStacks] Config loaded.", LogTextColor.Green, LogBackgroundColor.Black);
         }
 
-        configReload.Start(pathToMod, ItemsConfig.FileName, () => { return Task.FromResult(LoadConfig(pathToMod)); });
+        LoadParamsConfig(pathToMod);
+
+        configReload.Start(pathToMod, ItemsConfig.FileName, () => { return Task.FromResult(LoadItemsConfig(pathToMod)); });
+        configReload.Start(pathToMod, ParamsConfig.FileName, () => { return Task.FromResult(LoadParamsConfig(pathToMod)); });
 
         BaseInteractionRequestDataConverter.RegisterModDataHandler(RofsRouter, jsonUtil.Deserialize<RemoveOneFromStack.RemoveOneFromStackModel>);
-        
+        BaseInteractionRequestDataConverter.RegisterModDataHandler(PotRouter, jsonUtil.Deserialize<PlantOneTripwire.PlantOneTripwireModel>);
+
         return Task.CompletedTask;
     }
 
-    private bool LoadConfig(string pathToMod)
+    private bool LoadParamsConfig(string pathToMod)
+    {
+        try
+        {
+            var configPath = Path.Combine(pathToMod, ParamsConfig.FileName);
+
+            if (!File.Exists(configPath))
+            {
+                DefaultConfigs.CreateParamsConfig(configPath);
+            }
+
+            var config = modHelper.GetJsonDataFromFile<ParamsConfig>(pathToMod, ParamsConfig.FileName);
+            var mult = config.WeightMultiplier;
+
+            var configuration = databaseServer.GetTables().Globals.Configuration;
+            var stamina = configuration.Stamina;
+            var inertia = configuration.Inertia;
+
+            if (_defaultWeights.Count == 0)
+            {
+                _defaultWeights["BaseOverweight"] = stamina.BaseOverweightLimits;
+                _defaultWeights["SprintOverweight"] = stamina.SprintOverweightLimits;
+                _defaultWeights["WalkOverweight"] = stamina.WalkOverweightLimits;
+                _defaultWeights["WalkSpeedOverweight"] = stamina.WalkSpeedOverweightLimits;
+                _defaultWeights["Inertia"] = inertia.InertiaLimits;
+            }
+
+            stamina.BaseOverweightLimits = _defaultWeights["BaseOverweight"] with
+            {
+                X = _defaultWeights["BaseOverweight"].X * mult,
+                Y = _defaultWeights["BaseOverweight"].Y * mult
+            };
+
+            stamina.SprintOverweightLimits = _defaultWeights["SprintOverweight"] with
+            {
+                X = _defaultWeights["SprintOverweight"].X * mult,
+                Y = _defaultWeights["SprintOverweight"].Y * mult
+            };
+
+            stamina.WalkOverweightLimits = _defaultWeights["WalkOverweight"] with
+            {
+                X = _defaultWeights["WalkOverweight"].X * mult,
+                Y = _defaultWeights["WalkOverweight"].Y * mult
+            };
+
+            stamina.WalkSpeedOverweightLimits = _defaultWeights["WalkSpeedOverweight"] with
+            {
+                X = _defaultWeights["WalkSpeedOverweight"].X * mult,
+                Y = _defaultWeights["WalkSpeedOverweight"].Y * mult
+            };
+
+            configuration.Inertia.InertiaLimits = _defaultWeights["Inertia"] with
+            {
+                Y = _defaultWeights["Inertia"].Y * mult
+            };
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWithColor($"[BarterItemsStacks] Loading Error >> {ex.Message}", LogTextColor.White, LogBackgroundColor.Red);
+            return false;
+        }
+    }
+
+    private bool LoadItemsConfig(string pathToMod)
     {
         try
         {
@@ -132,7 +151,7 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
                 {
                     var props = template.Properties;
                     
-                    if (props != null && _defaults.TryGetValue(tplId, out var def))
+                    if (props != null && _defaultTemplates.TryGetValue(tplId, out var def))
                     {
                         props.StackMaxSize = def.StackMaxSize;
                         props.MaxResource = def.MaxResource;
@@ -153,7 +172,7 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
             var configPath = Path.Combine(pathToMod, ItemsConfig.FileName);
             if (!File.Exists(configPath))
             {
-                DefaultConfig.Create(configPath);
+                DefaultConfigs.CreateItemsConfig(configPath);
                 logger.LogWithColor("[BarterItemsStacks] Default config generated.", LogTextColor.Green, LogBackgroundColor.Black);
             }
             
@@ -253,9 +272,9 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
 
         if (props != null)
         {
-            if (!_defaults.ContainsKey(tplId))
+            if (!_defaultTemplates.ContainsKey(tplId))
             {
-                _defaults[tplId] = new DefaultProps(
+                _defaultTemplates[tplId] = new DefaultProps(
                     props.StackMaxSize,
                     props.MaxResource,
                     props.MaxHpResource,
@@ -308,7 +327,7 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
             
             if (weight > 0)
             {
-                var def = _defaults[tplId];
+                var def = _defaultTemplates[tplId];
                 props.Weight = (def.Weight ?? props.Weight) * weight;
                 changed = true;
             }
@@ -316,7 +335,7 @@ public class BarterItemsStacks(ModHelper modHelper, DatabaseServer databaseServe
             // Hot reload not working with handbook
             if (price > 0)
             {
-                var def = _defaults[tplId];
+                var def = _defaultTemplates[tplId];
 
                 if (handbookItem != null) handbookItem.Price = def.Price * price;
                 

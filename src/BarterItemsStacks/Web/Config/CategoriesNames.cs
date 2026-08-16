@@ -54,12 +54,7 @@ public static class CategoriesNames
         {
             "5448ecbe4bdc2d60728b4568"
         }),
-        
-        new("Ammo Packs", new[]
-        {
-            "543be5cb4bdc2deb348b4568"
-        }),
-        
+
         new("Special Items", new[]
         {
             "5447e0e74bdc2d3c308b4567",
@@ -70,26 +65,6 @@ public static class CategoriesNames
             "62e9103049c018f425059f38"
         })
     ];
-    
-    private static readonly ImmutableDictionary<string, string> ParentToCategory =
-        Categories
-            .SelectMany(c => c.ParentIds.Select(p => (ParentId: p, Category: c.Name)))
-            .GroupBy(x => x.ParentId, StringComparer.Ordinal)
-            .ToImmutableDictionary(
-                g => g.Key,
-                g => g.First().Category,
-                StringComparer.Ordinal
-            );
-    
-    public static string Get(string? parentId, string fallback)
-    {
-        if (string.IsNullOrWhiteSpace(parentId))
-            return fallback;
-
-        return ParentToCategory.TryGetValue(parentId, out var category)
-            ? category
-            : fallback;
-    }
     
     public sealed record Category(string Name, IReadOnlyList<string> ParentIds);
 }

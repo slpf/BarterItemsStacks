@@ -23,10 +23,10 @@
     <SPTRefDir>../../deps40</SPTRefDir>
     
     <AssemblySearchPaths>
-      $(SPTRefDir)/BepInEx/core;
-      $(SPTRefDir)/BepInEx/plugins/spt;
-      $(SPTRefDir)/BepInEx/plugins/spt/ConfigurationManager;
-      $(SPTRefDir)/EscapeFromTarkov_Data/Managed;
+      $(SPTRefDir)/core;
+      $(SPTRefDir)/plugins/spt;
+      $(SPTRefDir)/plugins/spt/ConfigurationManager;
+      $(SPTRefDir)/managed;
       $(AssemblySearchPaths);
     </AssemblySearchPaths>
   </PropertyGroup>
@@ -58,6 +58,7 @@
   <ItemGroup>
     <Reference Include="Newtonsoft.Json" />
     <Reference Include="Assembly-CSharp" />
+    <Reference Include="DissonanceVoip" />
     <Reference Include="Comfort" />
     <Reference Include="Comfort.Unity" />
     <Reference Include="ItemComponent.Types" />

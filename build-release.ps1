@@ -7,12 +7,11 @@ Set-StrictMode -Version Latest
 $projectPaths = @(
     Join-Path $PSScriptRoot "src\BarterItemsStacks\BarterItemsStacks.csproj"
     Join-Path $PSScriptRoot "src\BarterItemsStacksClient\BarterItemsStacksClient.csproj"
-    Join-Path $PSScriptRoot "src\BarterItemsStacksFika\BarterItemsStacksFika.csproj"
 )
 $modInfoPath = Join-Path $PSScriptRoot "src\ModInfo.cs"
 $buildPath = Join-Path $PSScriptRoot "build"
 $bepInExPath = Join-Path $buildPath "BepInEx"
-$sptRuntimePath = Join-Path $buildPath "SPT_Runtime"
+$sptPath = Join-Path $buildPath "SPT"
 $distributionPath = Join-Path $PSScriptRoot "distrib"
 
 foreach ($projectPath in $projectPaths)
@@ -64,27 +63,19 @@ if (!(Test-Path -LiteralPath $bepInExPath -PathType Container))
     throw "Build output was not found: $bepInExPath"
 }
 
-if (!(Test-Path -LiteralPath $sptRuntimePath -PathType Container))
+if (!(Test-Path -LiteralPath $sptPath -PathType Container))
 {
-    throw "Build output was not found: $sptRuntimePath"
+    throw "Build output was not found: $sptPath"
 }
 
 New-Item -ItemType Directory -Path $distributionPath -Force | Out-Null
 
 $archivePath = Join-Path $distributionPath "BarterItemsStacks-$version.zip"
-$fikaArchivePath = Join-Path $distributionPath "BarterItemsStacksFika.zip"
-$fikaDllPath = Join-Path $bepInExPath "plugins\BarterItemsStacksFika.dll"
 $archiveBasePrefix = [System.IO.Path]::GetFullPath($buildPath).TrimEnd('\', '/') +
     [System.IO.Path]::DirectorySeparatorChar
 
-if (!(Test-Path -LiteralPath $fikaDllPath -PathType Leaf))
-{
-    throw "Fika build output was not found: $fikaDllPath"
-}
-
 [System.IO.FileInfo[]]$files = @(
-    Get-ChildItem -LiteralPath $bepInExPath, $sptRuntimePath -File -Recurse |
-        Where-Object { $_.FullName -ne $fikaDllPath } |
+    Get-ChildItem -LiteralPath $bepInExPath, $sptPath -File -Recurse |
         Sort-Object FullName
 )
 
@@ -149,9 +140,5 @@ function New-ReleaseArchive
 }
 
 New-ReleaseArchive -Path $archivePath -Files $files
-New-ReleaseArchive -Path $fikaArchivePath -Files @(
-    Get-Item -LiteralPath $fikaDllPath
-)
 
 Write-Host "Created $archivePath"
-Write-Host "Created $fikaArchivePath"

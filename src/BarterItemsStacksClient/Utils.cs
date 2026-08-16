@@ -1,5 +1,8 @@
 ﻿using EFT.InventoryLogic;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using InvContainer = EFT.InventoryLogic.IContainer;
 
 namespace BarterItemsStacksClient
 {
@@ -91,6 +94,22 @@ namespace BarterItemsStacksClient
             }
 
             return false;
+        }
+
+        public static bool FindStackForMerge(IEnumerable<InvContainer> containers, Item itemToMerge, out Item mergeableItem, int minimumStackSpace = 0)
+        {
+            bool ignoreFir = CanIgnoreFirStatus(itemToMerge, itemToMerge);
+
+            mergeableItem = containers.SelectMany(x => x.Items)
+                .Where(x => x != itemToMerge)
+                .Where(x => x.TemplateId == itemToMerge.TemplateId)
+                .Where(x => ignoreFir || x.SpawnedInSession == itemToMerge.SpawnedInSession)
+                .Where(x => x.StackObjectsCount < x.StackMaxSize)
+                .Where(IsFullResource)
+                .OrderByDescending(x => x.StackObjectsCount)
+                .FirstOrDefault(x => minimumStackSpace <= x.StackMaxSize - x.StackObjectsCount);
+
+            return mergeableItem != null;
         }
     }
 }
