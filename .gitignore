@@ -3,6 +3,7 @@
 **/bin/
 **/obj/
 **/build/
+**/distrib/
 launchSettings.json
 *.sln.DotSettings.user
 *.csproj.DotSettings.user

@@ -26,22 +26,38 @@
 		<PackageReference Include="SPTarkov.Reflection" Version="4.1.0" />
 	</ItemGroup>
 	<ItemGroup>
-		<EmbeddedResource Include="Web\Assets\**\*.*"
-						  Exclude="Web\Assets\items\items.zip"/>
+		<EmbeddedResource Include="Web/Assets/**/*.*"
+						  Exclude="Web/Assets/items/items.zip"/>
 	</ItemGroup>
 	<ItemGroup>
-		<Compile Include="..\ModInfo.cs" />
+		<Compile Include="../ModInfo.cs" />
 	</ItemGroup>
 	<ItemGroup>
-		<_ContentIncludedByDefault Remove="Components\ItemRow.razor" />
-		<_ContentIncludedByDefault Remove="Components\Search.razor" />
+		<_ContentIncludedByDefault Remove="Components/ItemRow.razor" />
+		<_ContentIncludedByDefault Remove="Components/Search.razor" />
 	</ItemGroup>
+	
+	<ItemGroup>
+        <Content Include="../../presets/*.jsonc">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>presets/%(Filename)%(Extension)</Link>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Update="../../presets/"/>
+    </ItemGroup>
 	
 	<Target Name="CopyToBuildFolder" AfterTargets="Build">
 		<PropertyGroup>
-			<DestDir>$(MSBuildProjectDirectory)\..\..\build\SPT_Runtime\user\mods\BarterItemsStacks\</DestDir>
+			<DestDir>$(MSBuildProjectDirectory)/../../build/SPT_Runtime/user/mods/BarterItemsStacks/</DestDir>
 		</PropertyGroup>
-		<MakeDir Directories="$(DestDir)" />
+		<MakeDir Directories="$(DestDir)"/>
+        <MakeDir Directories="$(DestDir)/presets"/>
 		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DestDir)" SkipUnchangedFiles="true" />
+		<ItemGroup>
+            <LocaleFiles Include="$(TargetDir)/presets/*.jsonc"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(LocaleFiles)" DestinationFolder="$(DestDir)/presets/" SkipUnchangedFiles="true"/>
 	</Target>
 </Project>
