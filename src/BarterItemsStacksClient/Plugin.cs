@@ -64,6 +64,11 @@ namespace BarterItemsStacksClient
             {
                 new StashManagementHelperPatch().Enable();
             }
+
+            if (HarmonyLib.AccessTools.TypeByName("AdvancedStashSorting.Patches.SortPreparationPatch") != null)
+            {
+                new AdvancedStashSortingPatch().Enable();
+            }
         }
     }
 }
