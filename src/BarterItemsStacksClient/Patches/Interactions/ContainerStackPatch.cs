@@ -16,17 +16,9 @@ namespace BarterItemsStacksClient.Patches.Interactions
 
         [PatchPrefix]
         public static bool Prefix(IEnumerable<InvContainer> containersToPut, Item itemToMerge,
-            ref StackableItemItemClass mergeableItem, int overrideCount, ref bool __result)
+            ref Item mergeableItem, int overrideCount, ref bool __result)
         {
-            Item found = null;
-            __result = Utils.FindStackForMerge(containersToPut, itemToMerge, out found, overrideCount);
-            mergeableItem = found as StackableItemItemClass;
-
-            if (mergeableItem == null)
-            {
-                __result = false;
-            }
-
+            __result = Utils.FindStackForMerge(containersToPut, itemToMerge, out mergeableItem, overrideCount);
             return false;
         }
     }
