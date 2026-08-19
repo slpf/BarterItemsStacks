@@ -92,7 +92,6 @@ namespace BarterItemsStacks
                 }
                 else if (
                     item.inventoryItem.Upd is not null
-                    && _itemHelper.GetItem(item.inventoryItem.Template) is { Key: true, Value: { Properties: { StackMaxSize: > 1 } } }
                     && item.inventoryItem.Upd.StackObjectsCount is not null
                     && item.inventoryItem.Upd.StackObjectsCount > item.requestedItem.Count)
                 {
@@ -224,7 +223,6 @@ namespace BarterItemsStacks
                 }
 
                 if (item.inventoryItem.Upd is not null
-                    && _itemHelper.GetItem(item.inventoryItem.Template) is { Key: true, Value: { Properties: { StackMaxSize: > 1 } } }
                     && item.inventoryItem.Upd.StackObjectsCount is not null
                     && item.inventoryItem.Upd.StackObjectsCount > item.requestedItem.Count)
                 {
