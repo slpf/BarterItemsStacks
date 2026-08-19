@@ -50,7 +50,7 @@ namespace BarterItemsStacksClient.Patches.Hideout
                         {
                             gstruct = InteractionsHandlerClass.SplitToNowhere(stackableItemItemClass, @class.itemReference.count, __instance.InventoryController_0, __instance.InventoryController_0, false).Cast<GClass3422, GInterface424>();
                         }
-                        else if(item.StackMaxSize > 1 && item.StackObjectsCount > @class.itemReference.count)
+                        else if(item.StackObjectsCount > @class.itemReference.count)
                         {
                             gstruct = InteractionsHandlerClass.SplitToNowhere(item, @class.itemReference.count, __instance.InventoryController_0, __instance.InventoryController_0, false).Cast<GClass3422, GInterface424>();
                         }

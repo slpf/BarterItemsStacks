@@ -71,7 +71,6 @@ namespace BarterItemsStacks
                 }
                 else if (
                     item.inventoryItem.Upd is not null
-                    && itemHelper.GetItem(item.inventoryItem.Template) is { Key: true, Value: { Properties: { StackMaxSize: > 1 } } }
                     && item.inventoryItem.Upd.StackObjectsCount is not null
                     && item.inventoryItem.Upd.StackObjectsCount > item.requestedItem.Count)
                 {
@@ -83,37 +82,7 @@ namespace BarterItemsStacks
                 }
             }
 
-            var profileHideoutArea = pmcData.Hideout.Areas.FirstOrDefault(area => area.Type == request.AreaType);
-            if (profileHideoutArea is null)
-            {
-                logger.Error(serverLocalisationService.GetText("hideout-unable_to_find_area", request.AreaType));
-                httpResponseUtil.AppendErrorToOutput(output);
-
-                return;
-            }
-
-            var hideoutDataDb = databaseService.GetTables().Hideout.Areas.FirstOrDefault(area => area.Type == request.AreaType);
-            if (hideoutDataDb is null)
-            {
-                logger.Error(serverLocalisationService.GetText("hideout-unable_to_find_area_in_database", request.AreaType));
-                httpResponseUtil.AppendErrorToOutput(output);
-
-                return;
-            }
-
-            var ctime = hideoutDataDb.Stages[(profileHideoutArea.Level + 1).ToString()].ConstructionTime;
-            if (ctime > 0)
-            {
-                if (profileHelper.IsDeveloperAccount(sessionID))
-                {
-                    ctime = 40;
-                }
-
-                var timestamp = timeUtil.GetTimeStamp();
-
-                profileHideoutArea.CompleteTime = (int)Math.Round(timestamp + ctime.Value);
-                profileHideoutArea.Constructing = true;
-            }
+            base.StartUpgrade(pmcData, new HideoutUpgradeRequestData { AreaType = request.AreaType, Items = [] }, sessionID, output);
         }
 
         public override ItemEventRouterResponse PutItemsInAreaSlots(PmcData pmcData, HideoutPutItemInRequestData addItemToHideoutRequest, MongoId sessionID)
@@ -163,7 +132,6 @@ namespace BarterItemsStacks
                 }
 
                 if (item.inventoryItem.Upd is not null
-                    && itemHelper.GetItem(item.inventoryItem.Template) is { Key: true, Value: { Properties: { StackMaxSize: > 1 } } }
                     && item.inventoryItem.Upd.StackObjectsCount is not null
                     && item.inventoryItem.Upd.StackObjectsCount > item.requestedItem.Count)
                 {

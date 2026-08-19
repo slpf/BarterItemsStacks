@@ -34,8 +34,8 @@ namespace BarterItemsStacksClient.Patches.Hideout
                     {
                         Item = item,
                         IsTool = flag,
-                        Count = ((stackableItemItemClass == null) ? (item.StackMaxSize > 1) ? Mathf.Min(num, item.StackObjectsCount) : 1 : Mathf.Min(num, stackableItemItemClass.StackObjectsCount)),
-                        RemoveReferenceItem = stackableItemItemClass != null ? num >= stackableItemItemClass.StackObjectsCount : (item.StackMaxSize > 1 ? num >= item.StackObjectsCount : true),
+                        Count = ((stackableItemItemClass == null) ? (item.StackMaxSize > 1 || item.StackObjectsCount > 1) ? Mathf.Min(num, item.StackObjectsCount) : 1 : Mathf.Min(num, stackableItemItemClass.StackObjectsCount)),
+                        RemoveReferenceItem = stackableItemItemClass != null ? num >= stackableItemItemClass.StackObjectsCount : (item.StackMaxSize > 1 || item.StackObjectsCount > 1 ? num >= item.StackObjectsCount : true),
                         Requirements = requirements
                     };
                     num -= gstruct.Count;
