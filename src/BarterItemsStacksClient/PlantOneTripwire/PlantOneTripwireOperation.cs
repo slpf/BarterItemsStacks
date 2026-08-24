@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
@@ -14,35 +13,24 @@ namespace BarterItemsStacksClient.PlantOneTripwire
         Vector3 fromPosition,
         Vector3 toPosition,
         IPlayer player,
-        Item beacon)
-        : AbstractAsyncOperation<PlantTripwireResult>(id, controller, result)
+        ThrowWeap beacon)
+        : PlantTripwireOperation(id, controller, result, fromPosition, toPosition, player)
     {
-        private readonly ThrowWeap _tripwire = result.Tripwire;
-        private readonly PlantingKit _plantingKit = result.PlantingKit;
-
-        public override Task<IResult> ExecuteInternal()
-        {
-            return Task.FromResult<IResult>(ExecuteAndFinish());
-        }
+        private readonly ThrowWeap _beacon = beacon;
 
         public override void Dispose()
         {
-            base.Dispose();
+            FinalizeOperation();
 
             if (base.Status == EOperationStatus.Succeeded && Singleton<IGameLevel>.Instantiated)
             {
-                Singleton<IGameLevel>.Instance.PlantTripwire(beacon, player.ProfileId, fromPosition, toPosition);
+                Singleton<IGameLevel>.Instance.PlantTripwire(_beacon, _player.ProfileId, _fromPosition, _toPosition);
             }
-        }
-
-        public override InventoryOperationDescriptor ToDescriptor()
-        {
-            throw new ClientServerOnlyOperationException(this);
         }
 
         public override BaseInventoryCommand ToBaseInventoryCommand(string ownerId)
         {
-            return new PlantOneTripwireModel(_tripwire.Id, _plantingKit?.Id);
+            return new PlantOneTripwireModel(Tripwire.Id, _plantingKit?.Id);
         }
     }
 }

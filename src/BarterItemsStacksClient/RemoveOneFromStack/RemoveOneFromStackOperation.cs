@@ -1,4 +1,5 @@
 ﻿using Comfort.Common;
+using EFT;
 using EFT.InventoryLogic;
 using System.Threading.Tasks;
 using EFT.InventoryLogic.Operations;
@@ -9,12 +10,14 @@ namespace BarterItemsStacksClient.RemoveOneFromStack
     {
         public Item Item;
         public ItemAddress Address;
+        private readonly bool _removesItem;
 
         public RemoveOneFromStackOperation(ushort id, ItemController controller, RemoveOneFromStackResult result) 
             : base(id, controller, result) 
         {
             Item = result.Item;
             Address = Item.Parent;
+            _removesItem = result.IsDiscard;
         }
 
         public override async Task<IResult> ExecuteInternal()
@@ -38,12 +41,20 @@ namespace BarterItemsStacksClient.RemoveOneFromStack
 
         public override EFT.InventoryOperationDescriptor ToDescriptor()
         {
-            return new RemoveOneFromStackDescriptor
+            if (!_removesItem)
+            {
+                return new SplitToNowhereDescriptor
+                {
+                    Operation = this,
+                    ItemId = Item.Id,
+                    Count = 1
+                };
+            }
+
+            return new RemoveOperationDescriptor
             {
                 Operation = this,
-                OwnerId = OwnerId,
-                OperationId = Id,
-                Item = Item.Id
+                ItemId = Item.Id
             };
         }
 

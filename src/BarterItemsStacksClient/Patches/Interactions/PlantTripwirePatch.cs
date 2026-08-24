@@ -26,11 +26,9 @@ namespace BarterItemsStacksClient.Patches.Interactions
             Vector3 toPosition,
             Callback callback)
         {
-            if (plantingKit == null || plantingKit.StackObjectsCount <= 1)
+            if (grenade == null || plantingKit == null ||
+                grenade.StackObjectsCount <= 1 && plantingKit.StackObjectsCount <= 1)
                 return true;
-
-            ThrowWeap beacon = grenade.CloneItem(__instance);
-            beacon.StackObjectsCount = 1;
 
             OperationResult<RemoveOneFromStackResult> grenadeConsume = InteractionsHandlerClassExtensions.RemoveOneFromStack(grenade, __instance, true);
             if (grenadeConsume.Failed)
@@ -45,6 +43,9 @@ namespace BarterItemsStacksClient.Patches.Interactions
                 callback?.Invoke(kitConsume.ToResult());
                 return false;
             }
+
+            ThrowWeap beacon = grenade.CloneItem(__instance);
+            beacon.StackObjectsCount = 1;
 
             PlantTripwireResult result = new PlantTripwireResult(grenade, plantingKit, new CombinedOperationResult(grenadeConsume.Value, kitConsume.Value));
 

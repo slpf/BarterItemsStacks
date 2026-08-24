@@ -43,6 +43,7 @@ namespace BarterItemsStacksClient
             new PlaceItemTriggerPatch().Enable();
             new PlaceItemProtectPatch().Enable();
             new PlantTripwirePatch().Enable();
+            new PlantTripwireDescriptorPatch().Enable();
             new ConvertOperationResultToOperationPatch().Enable();
             new SortComparatorPatch().Enable();    
             new ContainerStackPatch().Enable();

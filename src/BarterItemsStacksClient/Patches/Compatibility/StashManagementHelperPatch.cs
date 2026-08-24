@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using BepInEx.Logging;
 using Diz.LanguageExtensions;
 using EFT.InventoryLogic;
 using HarmonyLib;
@@ -13,8 +12,6 @@ namespace BarterItemsStacksClient.Patches.Compatibility;
 
 public class StashManagementHelperPatch : ModulePatch
 {
-    public static ManualLogSource Logger { get; set; }
-    
     protected override MethodBase GetTargetMethod()
     {
         return AccessTools.Method(AccessTools.TypeByName("StashManagementHelper.Helpers.ItemManager"), "MergeItems");
@@ -83,7 +80,12 @@ public class StashManagementHelperPatch : ModulePatch
                         
                         if (mergeResult.Succeeded)
                         {
-                            await inventoryController.TryRunNetworkTransaction(mergeResult);
+                            if ((await inventoryController.TryRunNetworkTransaction(mergeResult)) is { Failed: true } result)
+                            {
+                                Logger.LogError($"Failed to merge {sourceStack.Id} into {targetStack.Id}: {result.Error}");
+                                return;
+                            }
+
                             mergesMade = true;
                         }
                         else

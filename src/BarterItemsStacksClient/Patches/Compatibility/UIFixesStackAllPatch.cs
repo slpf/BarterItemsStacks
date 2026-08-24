@@ -43,7 +43,10 @@ namespace BarterItemsStacksClient.Patches.Compatibility
                     OperationResult<ITransferOrMergeResult> operation = ItemManipulator.TransferOrMerge(item, targetItem, inventoryController, true);
                     if (operation.Succeeded)
                     {
-                        await inventoryController.TryRunNetworkTransaction(operation);
+                        if ((await inventoryController.TryRunNetworkTransaction(operation)) is { Failed: true } result)
+                        {
+                            return new StringError(result.Error);
+                        }
                     }
                     else
                     {
