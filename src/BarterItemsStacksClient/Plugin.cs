@@ -50,6 +50,8 @@ namespace BarterItemsStacksClient
             new TopUpStackPatch().Enable();
             new NestedQuickMoveStackOrderPatch().Enable();
             new SpecialSlotStackPatch().Enable();
+            new SplitDiscoveryExperiencePatch().Enable();
+            new SplitLootExperiencePatch().Enable();
             
             if (HarmonyLib.AccessTools.TypeByName("MergeConsumables.Patches.ExecutePossibleAction_Patch") != null)
             {
