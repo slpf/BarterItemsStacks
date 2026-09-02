@@ -5,11 +5,13 @@ using SPTarkov.Common.Models.Logging;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Extensions;
+using SPTarkov.Server.Core.Helpers.Items;
 using SPTarkov.Server.Core.Helpers.Server;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Enums;
+using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
 using SPTarkov.Server.Core.Models.Spt.Tables;
 using SPTarkov.Server.Web;
@@ -46,7 +48,7 @@ public sealed record ModMetadata : IModMetadata, IModBlazorMetadata
 }
 
 [Injectable(TypePriority = OnLoadOrder.PostLoad + 50000)]
-public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, TemplateTable templateTable, ConfigReload configReload, ISptLogger<BarterItemsStacks> logger) : IOnLoad
+public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, TemplateTable templateTable, TraderConfig traderConfig, ItemHelper itemHelper, StackGenerationPolicy stackGenerationPolicy, ConfigReload configReload, ISptLogger<BarterItemsStacks> logger) : IOnLoad
 {
     public const string RofsRouter = "RemoveOneFromStack";
     public const string PotRouter = "PlantOneTripwire";
@@ -175,6 +177,7 @@ public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, Tem
             }
             
             var config = modHelper.GetJsonDataFromFile<ItemsConfig>(pathToMod, ItemsConfig.FileName);
+            HashSet<MongoId> stackLimitedTpls = [];
 
             foreach (var item in config.Items)
             {
@@ -184,7 +187,7 @@ public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, Tem
                 if (template.Type != "Node")
                 {
                     var handbookItem = handbook.Items.FirstOrDefault(x => x.Id == item.Key);
-                    ProcessTemplate(item.Key, item.Value, template, handbookItem);
+                    ProcessTemplate(item.Key, item.Value, template, handbookItem, stackLimitedTpls);
                 }
                 else
                 {
@@ -194,7 +197,7 @@ public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, Tem
                     foreach (var child in children)
                     {
                         var handbookItem = handbook.Items.FirstOrDefault(x => x.Id == child.Id);
-                        ProcessTemplate(child.Id, item.Value, child, handbookItem);
+                        ProcessTemplate(child.Id, item.Value, child, handbookItem, stackLimitedTpls);
                     }
                     
                     // Find all descendants considering all nesting levels
@@ -209,6 +212,9 @@ public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, Tem
                 }
             }
 
+            stackGenerationPolicy.SetTplIds(stackLimitedTpls);
+            SetCoopExtractGiftStackLimits(stackLimitedTpls);
+
             return true;
         }
         catch (Exception ex)
@@ -216,6 +222,20 @@ public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, Tem
             logger.LogWithColor($"[BarterItemsStacks] Loading Error >> {ex.Message}", Color.White, Color.Red);
             return false;
         }
+    }
+
+    private void SetCoopExtractGiftStackLimits(IReadOnlySet<MongoId> tplIds)
+    {
+        Dictionary<MongoId, MinMax<int>> stackLimits = traderConfig.Fence.CoopExtractGift.ItemStackLimits is null
+            ? []
+            : new Dictionary<MongoId, MinMax<int>>(traderConfig.Fence.CoopExtractGift.ItemStackLimits);
+
+        foreach (MongoId tplId in tplIds)
+        {
+            stackLimits[tplId] = new MinMax<int>(1, 1);
+        }
+
+        traderConfig.Fence.CoopExtractGift.ItemStackLimits = stackLimits;
     }
     
     private HashSet<string> GetAllChildren(Dictionary<MongoId, TemplateItem> itemsDb, string parentId)
@@ -252,7 +272,7 @@ public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, Tem
         return result;
     }
 
-    void ProcessTemplate(MongoId tplId, ItemsConfig.ItemRule itemRule, TemplateItem template, HandbookItem? handbookItem)
+    void ProcessTemplate(MongoId tplId, ItemsConfig.ItemRule itemRule, TemplateItem template, HandbookItem? handbookItem, HashSet<MongoId> stackLimitedTpls)
     {
         var parent = template.Parent;
 
@@ -288,6 +308,15 @@ public class BarterItemsStacks(ModHelper modHelper, GlobalTable globalTable, Tem
 
             if (stack > 0)
             {
+                if (stack > 1 && !itemHelper.IsOfBaseclasses(tplId, [BaseClasses.AMMO, BaseClasses.MONEY]))
+                {
+                    stackLimitedTpls.Add(tplId);
+                }
+                else
+                {
+                    stackLimitedTpls.Remove(tplId);
+                }
+
                 props.StackMaxSize = stack;
                 changed = true;
             }
