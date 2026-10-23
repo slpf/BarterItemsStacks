@@ -24,7 +24,7 @@ public class StashManagementHelperPatch : ModulePatch
         return false;
     }
     
-    private static async Task MergeItemsFixed(CompoundItem items, InventoryController inventoryController, bool simulate)
+    internal static async Task MergeItemsFixed(CompoundItem items, InventoryController inventoryController, bool simulate)
     {
         if (items == null) throw new ArgumentNullException(nameof(items));
         if (inventoryController == null) throw new ArgumentNullException(nameof(inventoryController));
@@ -102,5 +102,23 @@ public class StashManagementHelperPatch : ModulePatch
             Logger.LogError($"Error merging items: {e.Message}");
             throw;
         }
+    }
+}
+
+// Stash Management Helper 0.3.0 uses a void entry point. A Task result parameter
+// cannot be bound to it; observe the asynchronous replacement as vanilla does.
+public class StashManagementHelperVoidPatch : ModulePatch
+{
+    protected override MethodBase GetTargetMethod()
+    {
+        return AccessTools.Method(AccessTools.TypeByName("StashManagementHelper.Helpers.ItemManager"), "MergeItems",
+            new[] { typeof(CompoundItem), typeof(InventoryController), typeof(bool) });
+    }
+
+    [PatchPrefix]
+    private static bool Prefix(CompoundItem items, InventoryController inventoryController, bool simulate)
+    {
+        StashManagementHelperPatch.MergeItemsFixed(items, inventoryController, simulate).HandleExceptions();
+        return false;
     }
 }

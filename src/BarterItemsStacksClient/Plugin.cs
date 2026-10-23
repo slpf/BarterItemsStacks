@@ -65,7 +65,15 @@ namespace BarterItemsStacksClient
             
             if (HarmonyLib.AccessTools.TypeByName("StashManagementHelper.Helpers.ItemManager") != null)
             {
-                new StashManagementHelperPatch().Enable();
+                var mergeItems = HarmonyLib.AccessTools.Method(
+                    HarmonyLib.AccessTools.TypeByName("StashManagementHelper.Helpers.ItemManager"), "MergeItems",
+                    new[] { typeof(EFT.InventoryLogic.CompoundItem), typeof(EFT.InventoryLogic.InventoryController), typeof(bool) });
+                if (mergeItems?.ReturnType == typeof(void))
+                    new StashManagementHelperVoidPatch().Enable();
+                else if (mergeItems?.ReturnType == typeof(System.Threading.Tasks.Task))
+                    new StashManagementHelperPatch().Enable();
+                else
+                    LogSource.LogWarning("Unsupported Stash Management Helper MergeItems signature; compatibility patch skipped.");
             }
 
             if (HarmonyLib.AccessTools.TypeByName("AdvancedStashSorting.Patches.SortPreparationPatch") != null)
